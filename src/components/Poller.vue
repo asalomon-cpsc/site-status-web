@@ -66,13 +66,13 @@
      import axios from 'axios';
 import moment from 'moment';
 import _ from 'lodash';
-import UrlManager from './components/UrlManager.vue'
+import urlManager from './UrlManager.vue'
   export default {
   name: 'poller',
   components: {
    axios,
    moment,
-   UrlManager
+   urlManager
    
   },
   data:function() {
