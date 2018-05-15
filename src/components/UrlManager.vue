@@ -116,7 +116,7 @@ export default {
         "https://functions-cpsc1.azurewebsites.net/api/status",
       urlListEndPoint: "https://functions-cpsc1.azurewebsites.net/api/urls",
       urlManagementEndPoint:
-        "https://functions-cpsc1.azurewebsites.net/api/urls"
+        "https://functions-cpsc1.azurewebsites.net/api/url"
     };
   },
 
