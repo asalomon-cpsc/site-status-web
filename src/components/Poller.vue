@@ -63,132 +63,127 @@
       </template>
 
       <script>
-     import axios from 'axios';
-import moment from 'moment';
-import _ from 'lodash';
-import urlManager from './UrlManager.vue'
-  export default {
-  name: 'poller',
+import axios from "axios";
+import moment from "moment";
+import _ from "lodash";
+import urlManager from "./UrlManager.vue";
+export default {
+  name: "poller",
   components: {
-   axios,
-   moment,
-   urlManager
-   
+    axios,
+    moment,
+    urlManager
   },
-  data:function() {
-    return{
-    response: {
-      data: '',
-      status: '',
-      statusText: ''
-    
-    },
-    fetching: "false",
-    statuses: [],
-  
-    selectedStatus:{
-      urlName:'',
-      url:''
-    },
-    
-    statusListEndPoint:"https://functions-cpsc1.azurewebsites.net/api/statuses",
-    statusRemoverEndPoint:"https://functions-cpsc1.azurewebsites.net/api/status",
-   
-    statusRefreshEndPoint:"http://localhost:7071/api/statusPoller_http",
-  }
+  data: function() {
+    return {
+      response: {
+        data: "",
+        status: "",
+        statusText: ""
+      },
+      fetching: "false",
+      statuses: [],
+
+      selectedStatus: {
+        urlName: "",
+        url: ""
+      },
+
+      statusListEndPoint:
+        "https://functions-cpsc1.azurewebsites.net/api/statuses",
+      statusRemoverEndPoint:
+        "https://functions-cpsc1.azurewebsites.net/api/status",
+
+      statusRefreshEndPoint: "https://functions-cpsc1.azurewebsites.net/api/poller"
+    };
   },
-  
 
-  mounted: function () {
-    
-    this.getStatuses()
-   
-
+  mounted: function() {
+    this.getStatuses();
   },
   methods: {
     onRefreshBtnClicked() {
-      this.fetching = true
-      this.statuses = []
-      this.refreshPollStatuses()
-      this.getStatuses()
-
+      this.fetching = true;
+      this.statuses = [];
+      this.refreshPollStatuses();
+      this.getStatuses();
     },
-    
+
     getStatuses() {
-      
       var vm = this;
-      vm.statuses=[]
-      axios.get(vm.statusListEndPoint, {
-        withCredentials: false
-      }).catch(function (error) {
-        vm.response.data = JSON.stringify(response);
-        if (error.response) {
-          // The request was made and the server responded with a status code
-          // that falls out of the range of 2xx
-          vm.response.data = JSON.stringify(error.response);
-          vm.response.status = error.response.status;
-        }
-        vm.fetching = false
-      })
-        .then(function (response) {
+      vm.statuses = [];
+      axios
+        .get(vm.statusListEndPoint, {
+          withCredentials: false
+        })
+        .catch(function(error) {
+          vm.response.data = JSON.stringify(response);
+          if (error.response) {
+            // The request was made and the server responded with a status code
+            // that falls out of the range of 2xx
+            vm.response.data = JSON.stringify(error.response);
+            vm.response.status = error.response.status;
+          }
+          vm.fetching = false;
+        })
+        .then(function(response) {
           //console.log(response)
           if (response) {
-            var status={}
-            let data= response.data.forEach((i)=>{
-              status={
+            var status = {};
+            let data = response.data.forEach(i => {
+              status = {
                 rowKey: i.RowKey,
-                urlName:i.UrlName,
-                url:i.Url,
-                description:i.Description,
-                status:i.Status,
-                date:new moment(i.Date).format('MMMM Do YYYY, h:mm:ss a')
-              }
-              
-              let found = vm.statuses.find((element)=>{
-                return element.urlName === status.urlName
-              })
-              console.log(found)
-              vm.statuses.push(status)
-            }) 
+                urlName: i.UrlName,
+                url: i.Url,
+                description: i.Description,
+                status: i.Status,
+                date: new moment(i.Date).format("MMMM Do YYYY, h:mm:ss a")
+              };
+
+              let found = vm.statuses.find(element => {
+                return element.urlName === status.urlName;
+              });
+              console.log(found);
+              vm.statuses.push(status);
+            });
           }
-          vm.statuses.sort(function(a,b){
-            let statusA = a.status
-            let statusB = b.status
-            if(statusA < statusB){
-              return -1
+          vm.statuses.sort(function(a, b) {
+            let statusA = a.status;
+            let statusB = b.status;
+            if (statusA < statusB) {
+              return -1;
             }
-            if(statusA > statusB){
-              return 1
+            if (statusA > statusB) {
+              return 1;
             }
 
             return 0;
-          })
-          vm.fetching = false
+          });
+          vm.fetching = false;
         });
     },
     refreshPollStatuses() {
-      
       var vm = this;
-      axios.get(vm.statusRefreshEndPoint, {
-        withCredentials: false
-      }).catch(function (error) {
-        vm.response.data = JSON.stringify(response);
-        if (error.response) {
-          vm.response.data = JSON.stringify(error.response);
-          vm.response.status = error.response.status;
-        }
-        vm.fetching = false
-      })
-        .then(function (response) {
-          console.log(response)
-          if (response) {
-           //
+      axios
+        .get(vm.statusRefreshEndPoint, {
+          withCredentials: false
+        })
+        .catch(function(error) {
+          vm.response.data = JSON.stringify(response);
+          if (error.response) {
+            vm.response.data = JSON.stringify(error.response);
+            vm.response.status = error.response.status;
           }
-          vm.fetching = false
+          vm.fetching = false;
+        })
+        .then(function(response) {
+          console.log(response);
+          if (response) {
+            //
+          }
+          vm.fetching = false;
         });
     }
   }
-
-}
-
-    </script>
+};
+</script>
