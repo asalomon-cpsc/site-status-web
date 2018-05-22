@@ -67,7 +67,7 @@
               <button type="button" data-toggle="modal" data-target="#urlEditDialog" class="btn btn-primary btn-lg btn-block" @click="setSelectedUrl('','')">Add New</button>
              
             
-            <table class="table table-hover table-responsive-sm">
+            <table class="table table-hover table-responsive">
               <thead>
                 <tr>
                   <th scope="col">UrlName</th>
