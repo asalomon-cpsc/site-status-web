@@ -1,8 +1,5 @@
 <template>
 <div >
-    
-    
-    
       <ul class="nav nav-tabs" id="myTab" role="tablist">
         <li class="nav-item">
           <a class="nav-link active" id="cardDisplay-tab" data-toggle="tab" role="tab" aria-controls="cardDisplay" href="#cardDisplay" aria-selected="false" >Statuses</a>
@@ -11,6 +8,10 @@
         </li>
         <li class="nav-item">
           <a class="nav-link" id="urls-tab" data-toggle="tab" href="#urls" role="tab" aria-controls="urls" aria-selected="false">Url Management</a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" id="statusHistory-tab" data-toggle="tab" href="#statusHistory" role="tab" aria-controls="statusHistory" aria-selected="false">Status History</a>
         </li>
        
     
@@ -57,6 +58,17 @@
           <hr/>
         <url-manager></url-manager>
         </div>
+        <div class="tab-pane fade" id="statusHistory" role="tabpanel" aria-labelledby="statusHistory-tab">
+          <hr/>
+          <div class="container">
+      <div class="Chart__list">
+        <div class="Chart">
+          <h2>Linechart</h2>
+        <status-history></status-history>
+        </div>
+        </div>
+        </div>
+        </div>
   
       </div>
       </div>
@@ -66,13 +78,16 @@
 import axios from "axios";
 import moment from "moment";
 import _ from "lodash";
-import urlManager from "./UrlManager.vue";
+import urlManager from "./UrlManager.vue"
+import statusHistory from "./StatusHistory.vue"
+
 export default {
   name: "poller",
   components: {
     axios,
     moment,
-    urlManager
+    urlManager,
+    statusHistory
   },
   data: function() {
     return {
