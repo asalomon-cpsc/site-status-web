@@ -51,6 +51,9 @@
                   </div>
                 </div>
             </div>
+            
+              <div v-show="showStatusPanel" class="well well-lg">Referesh Submitted Successfully....Refresh the page in a few secondes for new data</div>
+            
         </div>
     
     
@@ -98,6 +101,7 @@ export default {
       },
       fetching: "false",
       statuses: [],
+      showStatusPanel:false,
 
       selectedStatus: {
         urlName: "",
@@ -194,10 +198,17 @@ export default {
         .then(function(response) {
           console.log(response);
           if (response) {
-            //
+            vm.response.status = response.status;
+            if(response.status){
+              showStatusPanel()
+            }
           }
           vm.fetching = false;
         });
+    },
+    showStatusPanel(){
+      let vm = this;
+      this.showStatusPanel= true
     }
   }
 };
