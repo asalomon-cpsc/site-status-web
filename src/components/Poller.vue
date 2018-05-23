@@ -200,15 +200,20 @@ export default {
           if (response) {
             vm.response.status = response.status;
             if(response.status){
-              vm.showStatusPanel()
+              vm.toggleStatusPanel()
             }
           }
           vm.fetching = false;
         });
     },
-    showStatusPanel(){
+    toggleStatusPanel(){
       let vm = this;
-      vm.showStatusPanel= true
+      if(vm.showStatusPanel){
+      vm.showStatusPanel= false
+      }
+      else{
+        vm.showStatusPanel = true
+      }
     }
   }
 };
