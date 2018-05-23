@@ -136,7 +136,7 @@ export default {
           withCredentials: false
         })
         .catch(function(error) {
-          vm.response.data = JSON.stringify(response);
+          
           if (error.response) {
             // The request was made and the server responded with a status code
             // that falls out of the range of 2xx
@@ -188,7 +188,7 @@ export default {
           withCredentials: false
         })
         .catch(function(error) {
-          vm.response.data = JSON.stringify(response);
+         
           if (error.response) {
             vm.response.data = JSON.stringify(error.response);
             vm.response.status = error.response.status;
