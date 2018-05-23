@@ -29,7 +29,7 @@
                   aria-valuemax="100" style="width: 75%"></div>
               </div>
               
-            <div v-show="!fetching && !showStatusPanel" class="card-columns">
+            <div v-show="!fetching || !statusRefreshRequested" class="card-columns">
                 <div v-for="status in statuses" class="card bg-transparent border-success mb-3"
                 v-bind:class="{ 'card bg-transparent border-success mb-3':status.status==='OK', 'card border-danger mb-3': status.status!=='OK' }">
                 <div class="card-header">{{status.urlName}}
@@ -102,7 +102,7 @@ export default {
       fetching: "false",
       statuses: [],
       showStatusPanel:false,
-
+      statusRefreshRequested:false,
       selectedStatus: {
         urlName: "",
         url: ""
@@ -124,6 +124,7 @@ export default {
     onRefreshBtnClicked() {
       this.fetching = true;
       this.statuses = [];
+      
       this.refreshPollStatuses();
       this.getStatuses();
     },
@@ -183,6 +184,7 @@ export default {
     },
     refreshPollStatuses() {
       var vm = this;
+      this.statusRefreshRequested = true
       axios
         .get(vm.statusRefreshEndPoint, {
           withCredentials: false
@@ -190,8 +192,8 @@ export default {
         .catch(function(error) {
          
           if (error.response) {
-            vm.response.data = JSON.stringify(error.response);
-            vm.response.status = error.response.status;
+            vm.response.data = JSON.stringify(error.response)
+            vm.response.status = error.response.status
           }
           vm.fetching = false;
         })
@@ -201,9 +203,11 @@ export default {
             vm.response.status = response.status;
             if(response.status){
               vm.toggleStatusPanel()
+              
             }
           }
-          vm.fetching = false;
+          vm.fetching = false
+          vm.statusRefreshRequested = false
         });
     },
     toggleStatusPanel(){
