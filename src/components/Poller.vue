@@ -61,7 +61,7 @@
           <hr/>
         <url-manager></url-manager>
         </div>
-        <div class="tab-pane fade" id="statusHistory" role="tabpanel" aria-labelledby="statusHistory-tab">
+        <!--<div class="tab-pane fade" id="statusHistory" role="tabpanel" aria-labelledby="statusHistory-tab">
           <hr/>
           <div class="container">
       <div class="Chart__list">
@@ -71,7 +71,7 @@
         </div>
         </div>
         </div>
-        </div>
+        </div>-->
   
       </div>
       </div>
