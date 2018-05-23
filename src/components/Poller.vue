@@ -10,9 +10,9 @@
           <a class="nav-link" id="urls-tab" data-toggle="tab" href="#urls" role="tab" aria-controls="urls" aria-selected="false">Url Management</a>
         </li>
 
-        <li class="nav-item">
+        <!--<li class="nav-item">
           <a class="nav-link" id="statusHistory-tab" data-toggle="tab" href="#statusHistory" role="tab" aria-controls="statusHistory" aria-selected="false">Status History</a>
-        </li>
+        </li>-->
        
     
       </ul>
@@ -52,7 +52,7 @@
                 </div>
             </div>
             
-              <div v-show="showStatusPanel" class="well well-lg">Referesh Submitted Successfully....Refresh the page in a few secondes for new data</div>
+              <div v-show="showStatusPanel" class="well well-lg">Status refresh Submitted Successfully....Refresh the page (F5) in a few secondes for new data</div>
             
         </div>
     
