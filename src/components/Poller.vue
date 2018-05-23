@@ -200,7 +200,7 @@ export default {
           if (response) {
             vm.response.status = response.status;
             if(response.status){
-              showStatusPanel()
+              vm.showStatusPanel()
             }
           }
           vm.fetching = false;
