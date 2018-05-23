@@ -29,7 +29,7 @@
                   aria-valuemax="100" style="width: 75%"></div>
               </div>
               
-            <div v-show="!fetching || showStatusPanel" class="card-columns">
+            <div v-show="!fetching || !showStatusPanel" class="card-columns">
                 <div v-for="status in statuses" class="card bg-transparent border-success mb-3"
                 v-bind:class="{ 'card bg-transparent border-success mb-3':status.status==='OK', 'card border-danger mb-3': status.status!=='OK' }">
                 <div class="card-header">{{status.urlName}}
