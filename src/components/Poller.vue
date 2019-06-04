@@ -5,10 +5,10 @@
         <a class="nav-link active" id="cardDisplay-tab" data-toggle="tab" role="tab" aria-controls="cardDisplay"
           href="#cardDisplay" aria-selected="false">Statuses</a>
       </li>
-      <li class="nav-item">
+     <!-- <li class="nav-item">
         <a class="nav-link" id="urls-tab" data-toggle="tab" href="#urls" role="tab" aria-controls="urls"
           aria-selected="false">Url Management</a>
-      </li>
+      </li>-->
 
       <!--<li class="nav-item">
           <a class="nav-link" id="statusHistory-tab" data-toggle="tab" href="#statusHistory" role="tab" aria-controls="statusHistory" aria-selected="false">Status History</a>
@@ -22,7 +22,9 @@
           </button>
 
         </div>
-
+        <div  v-if="!fetching || !showStatusPanel">
+          <h3>Last Updated: <span class="label label-default">{{lastUpdated}}</span></h3>
+        </div>
         <hr>
       </div>
       <div v-show="fetching" class="progress">
@@ -37,7 +39,7 @@
               <th scope="col">Status</th>
               <th scope="col">Url</th>
               <th scope="col">Status Description</th>
-              <th scope="col">Last Updated</th>
+              <th scope="col">Name</th>
             </tr>
           </thead>
           <tbody>
@@ -49,10 +51,11 @@
         secondes for new data</div>
 
     </div>
+     <!--
     <div class="tab-pane fade" id="urls" role="tabpanel" aria-labelledby="urls-tab">
       <hr />
       <url-manager></url-manager>
-    </div>
+    </div>-->
   </div>
 </template>
 
@@ -61,7 +64,6 @@
   import moment from "moment";
   import _ from "lodash";
   import urlManager from "./UrlManager.vue"
-
 
   export default {
     name: "poller",
@@ -83,22 +85,18 @@
           urlName: "",
           url: ""
         },
+        lastUpdated:null,
         tableView: true,
         datatable: null,
-        showStatusPanel: false,
-        statusListEndPoint: "https://functions-cpsc1.azurewebsites.net/api/statuses",
-        statusRemoverEndPoint: "https://functions-cpsc1.azurewebsites.net/api/status",
+        showStatusPanel: false
 
-        statusRefreshEndPoint: "https://functions-cpsc1.azurewebsites.net/api/poller"
       };
     },
+   
 
     mounted: function () {
       let vm = this
       vm.getStatuses();
-
-
-
     },
     methods: {
       onRefreshBtnClicked() {
@@ -117,7 +115,7 @@
             statusIndicator,
             '<a href="#">' + status.url + '</a>',
             status.description,
-            status.date
+            status.urlName
           ]).draw(false)
         })
       },
@@ -136,8 +134,9 @@
         });
 
         vm.statuses = [];
+        const statusListEndPoint = process.env.STATUS_LIST_ENDPOINT
         axios
-          .get(vm.statusListEndPoint, {
+          .get(statusListEndPoint, {
             withCredentials: false
           })
           .catch(function (error) {
@@ -171,6 +170,7 @@
                 vm.statuses.push(status);
               });
               vm.hydrateDataTable(vm.statuses)
+              vm.lastUpdated = vm.statuses.length >0 ? vm.statuses[0].date: "No Status To Report"
             }
             vm.statuses.sort(function (a, b) {
               let statusA = a.status;
@@ -190,8 +190,9 @@
       refreshPollStatuses() {
         var vm = this;
         this.statusRefreshRequested = true
+        const statusRefreshEndPoint = process.env.STATUS_REFRESH_ENDPOINT
         axios
-          .get(vm.statusRefreshEndPoint, {
+          .get(statusRefreshEndPoint, {
             withCredentials: false
           })
           .catch(function (error) {
