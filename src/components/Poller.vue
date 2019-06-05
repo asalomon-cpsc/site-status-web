@@ -47,8 +47,7 @@
         </table>
       </div>
       <!--Table View>-->
-      <div v-if="fetching" class="well well-lg">Status refresh Submitted Successfully....Refresh the page (F5) in a few
-        secondes for new data</div>
+      <div v-if="fetching" class="well well-lg"></div>
 
     </div>
      <!--
@@ -88,7 +87,8 @@
         lastUpdated:null,
         tableView: true,
         datatable: null,
-        showStatusPanel: false
+        showStatusPanel: false,
+        statusLabel:""
 
       };
     },
@@ -207,8 +207,9 @@
             if (response) {
               vm.response.status = response.status;
               if (response.status) {
+                vm.lastUpdated = response.data
                 vm.toggleStatusPanel()
-
+                
               }
             }
             vm.fetching = false
