@@ -5,7 +5,7 @@
         <a class="nav-link active" id="cardDisplay-tab" data-toggle="tab" role="tab" aria-controls="cardDisplay"
           href="#cardDisplay" aria-selected="false">Statuses</a>
       </li>
-     <!-- <li class="nav-item">
+      <!-- <li class="nav-item">
         <a class="nav-link" id="urls-tab" data-toggle="tab" href="#urls" role="tab" aria-controls="urls"
           aria-selected="false">Url Management</a>
       </li>-->
@@ -22,7 +22,7 @@
           </button>
 
         </div>
-        <div  v-if="!fetching || !showStatusPanel">
+        <div v-if="!fetching || !showStatusPanel">
           <h3>Last Updated: <span class="label label-default">{{lastUpdated}}</span></h3>
         </div>
         <hr>
@@ -50,7 +50,7 @@
       <div v-if="fetching" class="well well-lg"></div>
 
     </div>
-     <!--
+    <!--
     <div class="tab-pane fade" id="urls" role="tabpanel" aria-labelledby="urls-tab">
       <hr />
       <url-manager></url-manager>
@@ -84,15 +84,15 @@
           urlName: "",
           url: ""
         },
-        lastUpdated:null,
+        lastUpdated: null,
         tableView: true,
         datatable: null,
         showStatusPanel: false,
-        statusLabel:""
+        statusLabel: ""
 
       };
     },
-   
+
 
     mounted: function () {
       let vm = this
@@ -111,7 +111,7 @@
           statusIndicator = status.status === 'OK' ?
             '<td  class="card-text"><i class="fas fa-check-circle" style="color:green;"></i></td>' :
             '<td  class="card-text"><i class="fas fa-exclamation-circle" style="color:red;"></i></td>'
-            vm.datatable.row.add([
+          vm.datatable.row.add([
             statusIndicator,
             '<a href="#">' + status.url + '</a>',
             status.description,
@@ -170,7 +170,7 @@
                 vm.statuses.push(status);
               });
               vm.hydrateDataTable(vm.statuses)
-              vm.lastUpdated = vm.statuses.length >0 ? vm.statuses[0].date: "No Status To Report"
+              vm.lastUpdated = vm.statuses.length > 0 ? vm.statuses[0].date : "No Status To Report"
             }
             vm.statuses.sort(function (a, b) {
               let statusA = a.status;
@@ -209,7 +209,7 @@
               if (response.status) {
                 vm.lastUpdated = response.data
                 vm.toggleStatusPanel()
-                
+
               }
             }
             vm.fetching = false
