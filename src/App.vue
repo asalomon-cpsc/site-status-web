@@ -1,8 +1,8 @@
 <template>
   <div id="app"  class="container">
-    <div class="jumbotron .d-sm-none .d-md-block">
+    <div class=".d-sm-none .d-md-block">
       
-    <h3 class="display-4">{{title}}</h3>
+    <h3 class="display-5">{{title}}</h3>
   <p class="lead">{{description}}</p>
   <hr class="my-5">
   <p>{{technologies}}</p>

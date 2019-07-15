@@ -33,13 +33,13 @@
       </div>
 
       <div class="container">
-        <table v-if="!fetching || !showStatusPanel" id="urlList" class="display">
+        <table v-if="!fetching || !showStatusPanel" id="urlList" class="display responsive no-wrap" width="100%">
           <thead>
             <tr>
-              <th scope="col">Status</th>
+              <th scope="col">Url Status</th>
               <th scope="col">Url</th>
               <th scope="col">Status Description</th>
-              <th scope="col">Name</th>
+              
             </tr>
           </thead>
           <tbody>
@@ -112,8 +112,8 @@
             '<td  class="card-text"><i class="fas fa-check-circle" style="color:green;"></i></td>' :
             '<td  class="card-text"><i class="fas fa-exclamation-circle" style="color:red;"></i></td>'
           vm.datatable.row.add([
-            statusIndicator,
-            '<a href="#">' + status.url + '</a>',
+            status.urlName + ' ' + statusIndicator ,
+            '<a href="'+ status.url + '">' + status.url + '</a>',
             status.description,
             status.urlName
           ]).draw(false)
@@ -123,15 +123,18 @@
         var vm = this;
         vm.datatable = $('#urlList').DataTable({
           "retrieve": true,
+          "responsive": true,
           "order": [
-            [1, "desc"]
+            [2, "asc"]
           ],
           "dom": "Bfrtip",
           "buttons": [
-            "csv", "excel", "pdf"
+            "csv", "excel"
           ]
 
         });
+        
+        
 
         vm.statuses = [];
         const statusListEndPoint = process.env.STATUS_LIST_ENDPOINT
@@ -170,7 +173,7 @@
                 vm.statuses.push(status);
               });
               vm.hydrateDataTable(vm.statuses)
-              vm.lastUpdated = vm.statuses.length > 0 ? vm.statuses[0].date : "No Status To Report"
+              vm.lastUpdated = vm.statuses.length > 0 ? vm.statuses[0].date : "All URLS are OK"
             }
             vm.statuses.sort(function (a, b) {
               let statusA = a.status;
