@@ -1,21 +1,21 @@
 <template>
   <div>
-    <ul class="nav nav-tabs" id="myTab" role="tablist">
+    <ul class="nav nav-tabs" id="statusTab" role="tablist">
       <li class="nav-item">
         <a class="nav-link active" id="cardDisplay-tab" data-toggle="tab" role="tab" aria-controls="cardDisplay"
           href="#cardDisplay" aria-selected="false">Statuses</a>
       </li>
-      <!-- <li class="nav-item">
+       <li class="nav-item">
         <a class="nav-link" id="urls-tab" data-toggle="tab" href="#urls" role="tab" aria-controls="urls"
           aria-selected="false">Url Management</a>
-      </li>-->
+      </li>
 
       <!--<li class="nav-item">
           <a class="nav-link" id="statusHistory-tab" data-toggle="tab" href="#statusHistory" role="tab" aria-controls="statusHistory" aria-selected="false">Status History</a>
         </li>-->
 
     </ul>
-    <div class="tab-content" id="myTabContent">
+    <div class="tab-content" id="statustabContent">
       <div class="tab-pane fade show active" id="cardDisplay" role="tabpanel" aria-labelledby="cardDisplay-tab">
         <div class="form-control">
           <button @click="onRefreshBtnClicked()" type="button" class="btn btn-primary btn-lg btn-block">Refresh
@@ -24,9 +24,11 @@
         </div>
         <div v-if="!fetching || !showStatusPanel">
           <h3>Last Updated: <span class="label label-default">{{lastUpdated}}</span></h3>
+          <h3 v-if="!generalFailureIndicator"><i class="fas fa-check-circle" style="color:green;"></i></h3>
+          <h3 v-if="generalFailureIndicator"><i class="fas fa-exclamation-circle" style="color:red;"></i></h3>
         </div>
         <hr>
-      </div>
+      
       <div v-show="fetching" class="progress">
         <div class="progress-bar progress-bar-striped bg-danger progress-bar-animated" role="progressbar"
           aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>
@@ -39,6 +41,7 @@
               <th scope="col">Url Status</th>
               <th scope="col">Url</th>
               <th scope="col">Status Description</th>
+              <th scope="col">Status Code</th>
               
             </tr>
           </thead>
@@ -46,15 +49,12 @@
           </tbody>
         </table>
       </div>
+      </div>
       <!--Table View>-->
       <div v-if="fetching" class="well well-lg"></div>
 
-    </div>
-    <!--
-    <div class="tab-pane fade" id="urls" role="tabpanel" aria-labelledby="urls-tab">
-      <hr />
       <url-manager></url-manager>
-    </div>-->
+    </div>
   </div>
 </template>
 
@@ -88,10 +88,13 @@
         tableView: true,
         datatable: null,
         showStatusPanel: false,
-        statusLabel: ""
+        statusLabel: "",
+        successStatusIndicator:0,
+        generalFailureIndicator:false
 
       };
     },
+   
 
 
     mounted: function () {
@@ -99,6 +102,9 @@
       vm.getStatuses();
     },
     methods: {
+      isAtLeastOneFailure(statuses){
+       return (statuses.length == 0?false:statuses.filter(x=>x.statusCode==0).length)>0
+     },
       onRefreshBtnClicked() {
         this.fetching = true;
         this.statuses = [];
@@ -107,15 +113,19 @@
       hydrateDataTable(statuses) {
         let vm = this
         let statusIndicator;
+        
         statuses.forEach(status => {
-          statusIndicator = status.status === 'OK' ?
+          console.log(status)
+          statusIndicator = status.statusCode===  vm.successStatusIndicator ?
             '<td  class="card-text"><i class="fas fa-check-circle" style="color:green;"></i></td>' :
             '<td  class="card-text"><i class="fas fa-exclamation-circle" style="color:red;"></i></td>'
           vm.datatable.row.add([
             status.urlName + ' ' + statusIndicator ,
             '<a href="'+ status.url + '">' + status.url + '</a>',
             status.description,
-            status.urlName
+            status.statusCode,
+            status.urlName,
+           
           ]).draw(false)
         })
       },
@@ -125,7 +135,7 @@
           "retrieve": true,
           "responsive": true,
           "order": [
-            [2, "asc"]
+            [3, "desc"]
           ],
           "dom": "Bfrtip",
           "buttons": [
@@ -164,13 +174,15 @@
                   url: i.Url,
                   description: i.Description,
                   status: i.Status,
-                  date: new moment(i.Date).format("MMMM Do YYYY, h:mm:ss a")
+                  date: new moment(i.Date).format("MMMM Do YYYY, h:mm:ss a"),
+                  statusCode: i.Status==='OK'?vm.successStatusIndicator:1
                 };
 
                 let found = vm.statuses.find(element => {
                   return element.urlName === status.urlName;
                 });
                 vm.statuses.push(status);
+                vm.generalFailureIndicator=vm.isAtLeastOneFailure(vm.statuses)
               });
               vm.hydrateDataTable(vm.statuses)
               vm.lastUpdated = vm.statuses.length > 0 ? vm.statuses[0].date : "All URLS are OK"
