@@ -1,6 +1,6 @@
 
 <template>
-<div>
+<div class="tab-pane fade" id="urls" role="tabpanel" aria-labelledby="urls-tab">
   <div class="modal fade" id="urlEditDialog" tabindex="-1" role="dialog" aria-labelledby="urlEditDialogTitle" aria-hidden="true">
         <div class="modal-dialog" role="document">
           <div class="modal-content">
