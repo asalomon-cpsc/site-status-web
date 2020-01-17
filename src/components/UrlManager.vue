@@ -20,7 +20,7 @@
                 <input type="text" :readonly="selectedUrl.urlName!==''" class="form-control" aria-label="Url Name" v-model="selectedUrl.urlName"
                   aria-describedby="inputGroup-sizing-sm">
               </div>
-    
+
               <div class="input-group input-group-sm mb-3">
                 <div class="input-group-prepend">
                   <span class="input-group-text" id="inputGroup-sizing-sm">Url</span>
@@ -32,12 +32,12 @@
               <p class="alert-info">{{urlPersistStatus}}</p>
               <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
               <button type="button" class="btn btn-primary" @click="saveUrlChanges()">Save </button>
-    
+
             </div>
             </template>
             <template v-if="selectedUrl.urlName==''">
             <div  class="modal-body">
-               
+
                 <div class="input-group input-group-sm mb-3">
                   <div class="input-group-prepend">
                     <span class="input-group-text" id="inputGroup-sizing-sm">Url Name</span>
@@ -45,7 +45,7 @@
                   <input type="text"  class="form-control" aria-label="Url Name" v-model="newUrls.urlName"
                     aria-describedby="inputGroup-sizing-sm">
                 </div>
-    
+
                 <div class="input-group input-group-sm mb-3">
                   <div class="input-group-prepend">
                     <span class="input-group-text" id="inputGroup-sizing-sm">Url</span>
@@ -57,7 +57,7 @@
                 <p class="alert-info">{{urlPersistStatus}}</p>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                 <button type="button" class="btn btn-primary" @click="onAddUrlBtnClicked()">Save </button>
-    
+
               </div>
             </template>
           </div>
@@ -65,8 +65,8 @@
       </div>
         <div class="form-group">
               <button type="button" data-toggle="modal" data-target="#urlEditDialog" class="btn btn-primary btn-lg btn-block" @click="setSelectedUrl('','')">Add New</button>
-             
-            
+
+
             <table class="table table-hover table-responsive">
               <thead>
                 <tr>
@@ -82,7 +82,7 @@
                     <button data-toggle="modal" data-target="#urlEditDialog" @click="setSelectedUrl(url.UrlName,url.Url)">Edit</button>
                   </td>
                 </tr>
-    
+
               </tbody>
             </table>
           </div>
@@ -202,7 +202,6 @@ export default {
           withCredentials: false
         })
         .catch(function(error) {
-          vm.response.data = JSON.stringify(response);
           if (error.response) {
             // The request was made and the server responded with a status code
             // that falls out of the range of 2xx
