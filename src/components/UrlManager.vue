@@ -64,10 +64,9 @@
         </div>
       </div>
         <div class="form-group">
-              <button type="button" data-toggle="modal" data-target="#urlEditDialog" class="btn btn-primary btn-lg btn-block" @click="setSelectedUrl('','')">Add New</button>
-
-
-            <table class="table table-hover table-responsive">
+              <button type="button" data-toggle="modal" data-target="#urlEditDialog" class="btn btn-primary btn-lg btn-block" @click="setSelectedUrl('','')">Add New</button> </div>
+        <div class="table-response-sm">
+            <table class="table table-hover">
               <thead>
                 <tr>
                   <th scope="col">UrlName</th>
@@ -85,7 +84,7 @@
 
               </tbody>
             </table>
-          </div>
+         </div>
 </div>
 </template>
 <script>
