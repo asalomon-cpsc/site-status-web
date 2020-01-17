@@ -103,7 +103,7 @@
     },
     methods: {
       isAtLeastOneFailure(statuses){
-       return (statuses.length == 0?false:statuses.filter(x=>x.statusCode==0).length)>0
+       return statuses.length == 0?false:statuses.filter(x=>x.statusCode==1).length>0
      },
       onRefreshBtnClicked() {
         this.fetching = true;
@@ -117,7 +117,7 @@
         statuses.forEach(status => {
           statusIndicator = status.statusCode.toString() ===  vm.successStatusIndicator.toString() ?
             '<td  class="card-text"><i class="fas fa-check-circle" style="color:green;"></i></td>' :
-           'scode: ' + status.statusCode+ '- successindicator: '+ vm.successStatusIndicator + '<td  class="card-text"><i class="fas fa-exclamation-circle" style="color:red;"></i></td>'
+           '<td  class="card-text"><i class="fas fa-exclamation-circle" style="color:red;"></i></td>'
           vm.datatable.row.add([
             status.urlName + ' ' + statusIndicator ,
             '<a href="'+ status.url + '">' + status.url + '</a>',
