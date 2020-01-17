@@ -115,7 +115,7 @@
         let statusIndicator;
 
         statuses.forEach(status => {
-          statusIndicator = status.statusCode===  vm.successStatusIndicator ?
+          statusIndicator = status.statusCode.toString() ===  vm.successStatusIndicator.toString() ?
             '<td  class="card-text"><i class="fas fa-check-circle" style="color:green;"></i></td>' :
             '<td  class="card-text"><i class="fas fa-exclamation-circle" style="color:red;"></i></td>'
           vm.datatable.row.add([
