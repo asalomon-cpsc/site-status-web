@@ -28,7 +28,7 @@
           <h3 v-if="generalFailureIndicator"><i class="fas fa-exclamation-circle" style="color:red;"></i></h3>
         </div>
         <hr>
-      
+
       <div v-show="fetching" class="progress">
         <div class="progress-bar progress-bar-striped bg-danger progress-bar-animated" role="progressbar"
           aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>
@@ -42,7 +42,7 @@
               <th scope="col">Url</th>
               <th scope="col">Status Description</th>
               <th scope="col">Status Code</th>
-              
+
             </tr>
           </thead>
           <tbody>
@@ -94,7 +94,7 @@
 
       };
     },
-   
+
 
 
     mounted: function () {
@@ -113,9 +113,8 @@
       hydrateDataTable(statuses) {
         let vm = this
         let statusIndicator;
-        
+
         statuses.forEach(status => {
-          console.log(status)
           statusIndicator = status.statusCode===  vm.successStatusIndicator ?
             '<td  class="card-text"><i class="fas fa-check-circle" style="color:green;"></i></td>' :
             '<td  class="card-text"><i class="fas fa-exclamation-circle" style="color:red;"></i></td>'
@@ -125,7 +124,7 @@
             status.description,
             status.statusCode,
             status.urlName,
-           
+
           ]).draw(false)
         })
       },
@@ -143,8 +142,8 @@
           ]
 
         });
-        
-        
+
+
 
         vm.statuses = [];
         const statusListEndPoint = process.env.STATUS_LIST_ENDPOINT
@@ -166,7 +165,6 @@
 
             if (response) {
               var status = {};
-              console.log(response.data.length)
               let data = response.data.forEach(i => {
                 status = {
                   rowKey: i.RowKey,
