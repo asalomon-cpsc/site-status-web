@@ -38,7 +38,7 @@
         <table v-if="!fetching || !showStatusPanel" id="urlList" class="display responsive no-wrap" width="100%">
           <thead>
             <tr>
-              <th scope="col">Url Status</th>
+              <th scope="col">Site Name</th>
               <th scope="col">Url</th>
               <th scope="col">Status Description</th>
               <th scope="col">Status Code</th>
@@ -94,9 +94,6 @@
 
       };
     },
-
-
-
     mounted: function () {
       let vm = this
       vm.getStatuses();
@@ -142,9 +139,6 @@
           ]
 
         });
-
-
-
         vm.statuses = [];
         const statusListEndPoint = process.env.STATUS_LIST_ENDPOINT
         axios
