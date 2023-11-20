@@ -8,15 +8,16 @@
   <h3>Technologies</h3>
  
   <div class="list-group">
-  <a  v-for="t in technologies" :href="t.docUrl" class="list-group-item list-group-item-action flex-column align-items-start active">
+  <a  v-for="t in technologies" :href="t.docUrl" class="list-group-item list-group-item-action flex-column align-items-start">
     <div class="d-flex w-100 justify-content-between">
       <h5 class="mb-1">{{t.name}}</h5>
-      <small>version: {{t.version}}</small>
+      
     </div>
     <p class="mb-1">{{t.description}}.</p>
     <small>Version: {{t.version}}</small>
   </a>
    </div>
+  <hr>
   </div>
   <poller></poller>
   </div>
