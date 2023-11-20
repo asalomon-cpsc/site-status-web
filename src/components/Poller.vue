@@ -53,8 +53,8 @@
       <div v-if="fetching" class="well well-lg"></div>
 
       <url-manager></url-manager>
-      <div class="tab-pane fade" id="urls" role="tabpanel" aria-labelledby="urls-tab">
-      <div id="techs" class="list-group">
+      <div class="tab-pane fade" id="techs" role="tabpanel" aria-labelledby="techs-tab">
+      <div  class="list-group">
   <a  v-for="t in technologies" :href="t.docUrl" class="list-group-item list-group-item-action flex-column align-items-start">
     <div class="d-flex w-100 justify-content-between">
       <h5 class="mb-1">{{t.name}}</h5>
