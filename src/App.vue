@@ -7,16 +7,16 @@
   <hr class="my-5">
   <h3>Technologies</h3>
  
-  <div v-for="t in technologies" class="card">
-  <div class="card-header">
-    {{t.name}}-{{t.version}}
-  </div>
-  <div class="card-body">
-    <h5 class="card-title"> {{t.name}}t</h5>
-    <p class="card-text"> {{t.description}}</p>
-    <a :href="t.docUrl" class="btn btn-primary">{{t.name}}</a>
-  </div>
-</div>
+  <div class="list-group">
+  <a  v-for="t in technologies" :href="t.docUrl" class="list-group-item list-group-item-action flex-column align-items-start active">
+    <div class="d-flex w-100 justify-content-between">
+      <h5 class="mb-1">{{t.name}}</h5>
+      <small>version: {{t.version}}</small>
+    </div>
+    <p class="mb-1">{{t.description}}.</p>
+    <small>Version: {{t.version}}</small>
+  </a>
+   </div>
   </div>
   <poller></poller>
   </div>
