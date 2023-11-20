@@ -105,7 +105,7 @@
         technologies: [
         {name:'Vuejs',description:'Progressive Javacript Framework',version:'2.x',docUrl:'https://vuejs.org'},
         {name:'Azure Functions',description:'Azure Functions is an event-driven, serverless compute platform',version:'1.x',docUrl:'https://azure.microsoft.com/en-us/products/functions/'},
-        {name:'Netlify',description:'Build & run dynamic, high performance web applications at global scale—without requiring servers, DevOps, or costly infrastructure.',version:'n/a',docUrl:'https://www.netlify.com/for/web-applications
+        {name:'Netlify',description:'Build & run dynamic, high performance web applications at global scale—without requiring servers, DevOps, or costly infrastructure.',version:'n/a',docUrl:'https://www.netlify.com/for/web-applications'},
         {name:'Github',description:'a platform and cloud-based service for software development and version control, allowing developers to store and manage their code',version:'n/a',docUrl:'https://github.com/'}
       ]
 
