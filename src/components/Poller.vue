@@ -10,7 +10,7 @@
           aria-selected="false">Url Management</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" id="urls-tab" data-toggle="tab" href="#techs" role="tab" aria-controls="techs"
+        <a class="nav-link" id="techs-tab" data-toggle="tab" href="#techs" role="tab" aria-controls="techs"
           aria-selected="false">Technologies Used</a>
       </li>
 
