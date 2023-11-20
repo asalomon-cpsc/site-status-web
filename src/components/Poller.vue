@@ -13,11 +13,6 @@
         <a class="nav-link" id="techs-tab" data-toggle="tab" href="#techs" role="tab" aria-controls="techs"
           aria-selected="false">Technologies Used</a>
       </li>
-
-      <!--<li class="nav-item">
-          <a class="nav-link" id="statusHistory-tab" data-toggle="tab" href="#statusHistory" role="tab" aria-controls="statusHistory" aria-selected="false">Status History</a>
-        </li>-->
-
     </ul>
     <div class="tab-content" id="statustabContent">
       <div class="tab-pane fade show active" id="cardDisplay" role="tabpanel" aria-labelledby="cardDisplay-tab">
