@@ -5,7 +5,18 @@
     <h3 class="display-5">{{title}}</h3>
   <p class="lead">{{description}}</p>
   <hr class="my-5">
-  <p>{{technologies}}</p>
+  <h3>Technologies</h3>
+ 
+  <div v-for="t in technologies" class="card">
+  <div class="card-header">
+    {{t.name}}-{{t.version}}
+  </div>
+  <div class="card-body">
+    <h5 class="card-title"> {{t.name}}t</h5>
+    <p class="card-text"> {{t.description}}</p>
+    <a :href="t.docUrl" class="btn btn-primary">{{t.name}}</a>
+  </div>
+</div>
   </div>
   <poller></poller>
   </div>
@@ -21,8 +32,12 @@ export default {
   },
   data:function(){
     return {title: 'Site Status Dashboard',
-      description: 'This is a poller that executes http requests against specified websites and displays the current statuses',
-      technologies: 'It uses azure cloud serverless, vuejs and C# to poll websites'
+      description: 'This is a poller that executes http requests against specified websites/endpoints and displays the current statuses',
+      technologies: [
+        {name:'vuejs',description:'Progressive Javacript Framework',version:'2.x',docUrl:'https://vuejs.org'},
+        {name:'Azure Functions',description:'Azure Functions is an event-driven, serverless compute platform',version:'1.x',docUrl:'https://azure.microsoft.com/en-us/products/functions/'},
+        {name:'Netlify',description:'Build & run dynamic, high performance web applications at global scale—without requiring servers, DevOps, or costly infrastructure.',version:'n/a',docUrl:'https://www.netlify.com/for/web-applications/'}
+      ]
     }
   }
 }
