@@ -9,6 +9,10 @@
         <a class="nav-link" id="urls-tab" data-toggle="tab" href="#urls" role="tab" aria-controls="urls"
           aria-selected="false">Url Management</a>
       </li>
+      <li class="nav-item">
+        <a class="nav-link" id="urls-tab" data-toggle="tab" href="#urls" role="tab" aria-controls="urls"
+          aria-selected="false">Technologies Used</a>
+      </li>
 
       <!--<li class="nav-item">
           <a class="nav-link" id="statusHistory-tab" data-toggle="tab" href="#statusHistory" role="tab" aria-controls="statusHistory" aria-selected="false">Status History</a>
@@ -54,6 +58,16 @@
       <div v-if="fetching" class="well well-lg"></div>
 
       <url-manager></url-manager>
+      <div class="list-group">
+  <a  v-for="t in technologies" :href="t.docUrl" class="list-group-item list-group-item-action flex-column align-items-start">
+    <div class="d-flex w-100 justify-content-between">
+      <h5 class="mb-1">{{t.name}}</h5>
+      
+    </div>
+    <p class="mb-1">{{t.description}}.</p>
+    <small>Version: {{t.version}}</small>
+  </a>
+   </div>
     </div>
   </div>
 </template>
@@ -90,7 +104,13 @@
         showStatusPanel: false,
         statusLabel: "",
         successStatusIndicator:0,
-        generalFailureIndicator:false
+        generalFailureIndicator:false,
+        technologies: [
+        {name:'Vuejs',description:'Progressive Javacript Framework',version:'2.x',docUrl:'https://vuejs.org'},
+        {name:'Azure Functions',description:'Azure Functions is an event-driven, serverless compute platform',version:'1.x',docUrl:'https://azure.microsoft.com/en-us/products/functions/'},
+        {name:'Netlify',description:'Build & run dynamic, high performance web applications at global scale—without requiring servers, DevOps, or costly infrastructure.',version:'n/a',docUrl:'https://www.netlify.com/for/web-applications
+        {name:'Github',description:'a platform and cloud-based service for software development and version control, allowing developers to store and manage their code',version:'n/a',docUrl:'https://github.com/'}
+      ]
 
       };
     },
