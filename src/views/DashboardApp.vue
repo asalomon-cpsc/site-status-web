@@ -130,11 +130,11 @@
           <UptimeChart :statuses="statuses" />
           <ResponseTimeChart :statuses="statuses" />
         </div>
-        <HistoryChart :history="historyRaw" />
+        <HistoryChart :history="statsRaw" />
       </div>
 
       <div v-else-if="activeTab === 'history'" class="fade-in">
-        <HistoryLog :statuses="statuses" :history-rows="historyDisplayRows" />
+        <HistoryLog :statuses="statuses" />
       </div>
     </main>
 
@@ -155,7 +155,6 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useApi } from '../composables/useApi'
-import { toDisplayHistoryRows } from '../utils/statusHistory'
 import StatsOverview from '../components/StatsOverview.vue'
 import StatusGrid from '../components/StatusGrid.vue'
 import UrlManager from '../components/UrlManager.vue'
@@ -167,13 +166,13 @@ import UserMenu from '../components/UserMenu.vue'
 
 const route = useRoute()
 const router = useRouter()
-const { fetchStatuses, fetchStatusHistory, refreshStatuses } = useApi()
+const { fetchStatuses, fetchStatusStats, refreshStatuses } = useApi()
 
 const activeTab = ref('statuses')
 const statusesFilter = ref('all')
 const sidebarOpen = ref(false)
 const statuses = ref([])
-const historyRaw = ref([])
+const statsRaw = ref([])
 const isRefreshing = ref(false)
 const initialLoading = ref(true)
 const toasts = ref([])
@@ -183,11 +182,6 @@ const pollBannerBusy = ref(false)
 const pollBannerError = ref(false)
 
 const showAuthUnconfiguredBanner = computed(() => route.query.auth === 'unconfigured')
-
-const historyDisplayRows = computed(() => {
-  const rows = toDisplayHistoryRows(historyRaw.value)
-  return [...rows].sort((a, b) => new Date(b.date) - new Date(a.date))
-})
 
 const filterLabel = computed(() => {
   if (statusesFilter.value === 'online') return 'Online only'
@@ -267,15 +261,13 @@ const headerTitle = computed(() => {
 const headerSubtitle = computed(() => {
   const online = statuses.value.filter((s) => s.status === 'OK').length
   const total = statuses.value.length
-  const histCount = historyDisplayRows.value.length
-  const histNote = histCount ? ` · ${histCount} history row(s)` : ''
   let filterNote = ''
   if (activeTab.value === 'statuses' && statusesFilter.value === 'online') {
     filterNote = ' · Showing online only'
   } else if (activeTab.value === 'statuses' && statusesFilter.value === 'offline') {
     filterNote = ' · Showing failed only'
   }
-  return `${online} of ${total} endpoints OK (latest poll)${filterNote} · UI refresh ${new Date().toLocaleString()}${histNote}`
+  return `${online} of ${total} endpoints OK (latest poll)${filterNote} · UI refresh ${new Date().toLocaleString()}`
 })
 
 function showToast(message, type = 'success', durationMs = 5000) {
@@ -292,13 +284,18 @@ function toastIconClass(type) {
   return 'bi bi-check-circle'
 }
 
+function stripHtml(str) {
+  return str.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
 function formatPollerToast(body) {
   if (!body) return 'Poll started. Loading latest data.'
-  const m = body.match(/OrchestrationInstanceId:\s*([a-fA-F0-9]+)/)
+  const clean = stripHtml(body)
+  const m = clean.match(/OrchestrationInstanceId:\s*([a-fA-F0-9-]+)/)
   if (m) {
     return `Poll started (run ${m[1]}). Loading latest data.`
   }
-  return body.length > 160 ? `${body.slice(0, 160)}…` : body
+  return clean.length > 160 ? `${clean.slice(0, 160)}…` : clean
 }
 
 async function loadStatuses() {
@@ -320,7 +317,7 @@ async function loadStatuses() {
 }
 
 async function loadHistory() {
-  historyRaw.value = await fetchStatusHistory()
+  statsRaw.value = await fetchStatusStats()
 }
 
 async function refreshData() {

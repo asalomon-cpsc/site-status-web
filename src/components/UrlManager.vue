@@ -13,6 +13,14 @@
       </button>
     </div>
     <div class="dashboard-card-body">
+      <div
+        v-if="actionMessage"
+        class="alert mb-3"
+        :class="actionSuccess ? 'alert-success' : 'alert-danger'"
+        role="alert"
+      >
+        {{ actionMessage }}
+      </div>
       <div v-if="urls.length === 0" class="empty-state">
         <h4>No URLs configured</h4>
         <p>Use Add URL to register endpoints.</p>
@@ -120,6 +128,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { Modal } from 'bootstrap'
 import { useApi } from '../composables/useApi'
 
 const emit = defineEmits(['urlUpdated'])
@@ -131,6 +140,8 @@ const isEditing = ref(false)
 const saving = ref(false)
 const formMessage = ref('')
 const formSuccess = ref(false)
+const actionMessage = ref('')
+const actionSuccess = ref(false)
 const formData = ref({
   urlName: '',
   url: ''
@@ -178,7 +189,7 @@ async function handleSave() {
     
     setTimeout(() => {
       const modal = document.getElementById('urlModal')
-      const bsModal = bootstrap.Modal.getInstance(modal)
+      const bsModal = Modal.getInstance(modal)
       if (bsModal) bsModal.hide()
     }, 1000)
   } else {
@@ -193,11 +204,18 @@ async function handleDelete(urlName) {
   if (!confirm(`Are you sure you want to delete "${urlName}"?`)) {
     return
   }
-  
+
+  actionMessage.value = ''
   const result = await deleteUrl(urlName)
   if (result.success) {
+    actionMessage.value = `"${urlName}" deleted successfully.`
+    actionSuccess.value = true
     await loadUrls()
     emit('urlUpdated')
+    setTimeout(() => { actionMessage.value = '' }, 5000)
+  } else {
+    actionMessage.value = result.error || `Failed to delete "${urlName}". Check the console for details.`
+    actionSuccess.value = false
   }
 }
 
