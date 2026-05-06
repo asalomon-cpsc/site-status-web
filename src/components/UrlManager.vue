@@ -188,9 +188,15 @@ async function handleSave() {
     emit('urlUpdated')
     
     setTimeout(() => {
-      const modal = document.getElementById('urlModal')
-      const bsModal = Modal.getInstance(modal)
-      if (bsModal) bsModal.hide()
+      const modalEl = document.getElementById('urlModal')
+      Modal.getOrCreateInstance(modalEl).hide()
+      // Safety net: if backdrop lingers, clean it up manually
+      setTimeout(() => {
+        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove())
+        document.body.classList.remove('modal-open')
+        document.body.style.removeProperty('overflow')
+        document.body.style.removeProperty('padding-right')
+      }, 400)
     }, 1000)
   } else {
     formMessage.value = result.error || 'An error occurred'

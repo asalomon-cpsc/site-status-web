@@ -201,7 +201,8 @@ export function useApi() {
       })
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        const body = await response.text().catch(() => '')
+        throw new Error(`HTTP ${response.status}${body ? ': ' + body.slice(0, 200) : ''}`)
       }
 
       return { success: true }
@@ -234,7 +235,8 @@ export function useApi() {
       })
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        const body = await response.text().catch(() => '')
+        throw new Error(`HTTP ${response.status}${body ? ': ' + body.slice(0, 200) : ''}`)
       }
 
       return { success: true }
@@ -310,7 +312,8 @@ export function useApi() {
       )
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        const body = await response.text().catch(() => '')
+        throw new Error(`HTTP ${response.status}${body ? ': ' + body.slice(0, 200) : ''}`)
       }
 
       return { success: true }
