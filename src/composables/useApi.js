@@ -45,6 +45,13 @@ function getHistoryReaderFunctionName() {
   return 'statushistoryreader'
 }
 
+/** Aggregated uptime/check stats — GET JSON */
+function getStatsReaderFunctionName() {
+  const raw = import.meta.env.VITE_STATS_FUNCTION
+  if (raw && String(raw).trim()) return String(raw).trim()
+  return 'statusstatsreader'
+}
+
 function getBaseUrl() {
   // Dev + VITE_DEV_PROXY: call /__healthchker/api/... on the Vite host so the browser stays same-origin.
   // Production (or dev with proxy off): use VITE_API_BASE_URL or default Azure URL — requires CORS on the Function App.
@@ -242,11 +249,37 @@ export function useApi() {
 
   /**
    * Historical checks from storage (statusHistoryTable).
-   * Does not use the shared `loading` ref to avoid clobbering parallel status/URL loads.
+   * Returns { items, nextPageToken } — pass nextPageToken to load next page.
    */
-  async function fetchStatusHistory() {
+  async function fetchStatusHistory(nextPageToken = null) {
     try {
-      const response = await fetch(apiUrl(getHistoryReaderFunctionName()), {
+      const params = {}
+      if (nextPageToken) params.nextPageToken = nextPageToken
+      const response = await fetch(apiUrl(getHistoryReaderFunctionName(), params), {
+        method: 'GET',
+        credentials: 'omit'
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      const items = normalizeHistoryPayload(data)
+      const token = (data && !Array.isArray(data) && data.nextPageToken) ? data.nextPageToken : null
+      return { items, nextPageToken: token }
+    } catch (err) {
+      console.error('Error fetching status history:', err)
+      return { items: [], nextPageToken: null }
+    }
+  }
+
+  /**
+   * Aggregated stats rows from statusstatsreader (for uptime/chart widgets).
+   */
+  async function fetchStatusStats() {
+    try {
+      const response = await fetch(apiUrl(getStatsReaderFunctionName()), {
         method: 'GET',
         credentials: 'omit'
       })
@@ -258,7 +291,7 @@ export function useApi() {
       const data = await response.json()
       return normalizeHistoryPayload(data)
     } catch (err) {
-      console.error('Error fetching status history:', err)
+      console.error('Error fetching status stats:', err)
       return []
     }
   }
@@ -295,6 +328,7 @@ export function useApi() {
     error,
     fetchStatuses,
     fetchStatusHistory,
+    fetchStatusStats,
     refreshStatuses,
     fetchUrls,
     addUrl,
