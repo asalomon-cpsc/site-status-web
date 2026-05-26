@@ -111,7 +111,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   background: var(--surface-muted);
-  color: var(--accent);
+  color: var(--text-accent);
   font-size: 0.75rem;
   font-weight: 600;
 }
@@ -147,6 +147,6 @@ onUnmounted(() => {
 }
 
 .btn-signout:hover {
-  color: var(--accent);
+  color: var(--text-accent);
 }
 </style>

@@ -1,7 +1,13 @@
 <template>
   <div class="landing">
-    <div class="landing-card">
-      <h1>Site status</h1>
+    <div class="landing-theme">
+      <ThemeToggle />
+    </div>
+    <div class="landing-card card">
+      <div class="landing-brand">
+        <div class="logo-mark" aria-hidden="true"></div>
+        <h1>Site status</h1>
+      </div>
       <p class="lead">
         Open the public <strong>Statuses</strong> view, or sign in when you use Overview, URLs,
         Charts, or History.
@@ -11,7 +17,7 @@
         <code>.env</code> (see <code>.env.example</code>) to enable Sign in.
       </div>
       <div class="landing-actions">
-        <button type="button" class="btn btn-primary btn-lg" @click="goToApp">
+        <button type="button" class="btn btn-primary btn-lg landing-cta" @click="goToApp">
           Open dashboard
         </button>
       </div>
@@ -23,6 +29,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { msalConfig } from '../auth/authConfig.js'
+import ThemeToggle from '../components/ThemeToggle.vue'
 
 const router = useRouter()
 
@@ -40,29 +47,54 @@ function goToApp() {
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  background: var(--bg-page);
+  position: relative;
+}
+
+.landing-theme {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
 }
 
 .landing-card {
   max-width: 32rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  width: 100%;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
   padding: 2rem;
-  box-shadow: 0 4px 24px rgba(28, 36, 48, 0.06);
 }
 
-.landing-card h1 {
-  font-size: 1.5rem;
+.landing-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.landing-brand h1 {
+  font-family: var(--font-mono);
+  font-size: 11px;
   font-weight: 600;
-  margin-bottom: 0.75rem;
-  color: var(--text);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin: 0;
+  color: var(--text-main);
 }
 
 .lead {
   color: var(--text-muted);
   margin-bottom: 1.5rem;
   line-height: 1.5;
+  font-size: 14px;
+}
+
+.landing-cta {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 12px !important;
+  padding: 0.65rem 1.25rem !important;
 }
 
 .landing-actions {

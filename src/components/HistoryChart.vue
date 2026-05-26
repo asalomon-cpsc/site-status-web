@@ -15,7 +15,7 @@
         </p>
       </div>
       <div v-else class="chart-container" style="height: 320px;">
-        <Line :data="chartData" :options="chartOptions" />
+        <Line :key="theme" :data="chartData" :options="chartOptions" />
       </div>
     </div>
   </div>
@@ -24,6 +24,8 @@
 <script setup>
 import { computed } from 'vue'
 import { Line } from 'vue-chartjs'
+import { useTheme } from '../composables/useTheme.js'
+import { getChartPalette, chartTooltipPlugin } from '../utils/chartTheme.js'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -37,6 +39,8 @@ import {
 import { aggregateUptimeByDay } from '../utils/statusHistory'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
+
+const { theme } = useTheme()
 
 const props = defineProps({
   /** Raw history rows from fetchStatusHistory (array of objects). */
@@ -53,6 +57,7 @@ const hasData = computed(() => aggregated.value.labels.length > 0)
 const pointCount = computed(() => aggregated.value.labels.length)
 
 const chartData = computed(() => {
+  const palette = getChartPalette()
   const { labels, values } = aggregated.value
   return {
     labels,
@@ -61,55 +66,54 @@ const chartData = computed(() => {
         label: '% checks OK',
         data: values,
         fill: false,
-        borderColor: '#154273',
+        borderColor: palette.accent,
         borderWidth: 2,
         tension: 0.15,
-        pointBackgroundColor: '#154273',
-        pointBorderColor: '#ffffff',
+        pointBackgroundColor: palette.accent,
+        pointBorderColor: palette.pointBorder,
         pointBorderWidth: 2,
         pointRadius: 4,
-        pointHoverRadius: 5
-      }
-    ]
+        pointHoverRadius: 5,
+      },
+    ],
   }
 })
 
-const chartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      display: false
+const chartOptions = computed(() => {
+  const palette = getChartPalette()
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        ...chartTooltipPlugin(palette),
+        callbacks: {
+          label: (ctx) => ` ${ctx.raw}% OK`,
+        },
+      },
     },
-    tooltip: {
-      backgroundColor: '#ffffff',
-      titleColor: '#1c2430',
-      bodyColor: '#5a6572',
-      borderColor: '#d9dde3',
-      borderWidth: 1,
-      padding: 12,
-      callbacks: {
-        label: (ctx) => ` ${ctx.raw}% OK`
-      }
-    }
-  },
-  scales: {
-    x: {
-      grid: { color: '#e8eaed', drawBorder: false },
-      ticks: { color: '#5a6572', font: { size: 11 } }
+    scales: {
+      x: {
+        grid: { color: palette.grid, drawBorder: false },
+        ticks: {
+          color: palette.textMuted,
+          font: { family: '"JetBrains Mono", monospace', size: 11 },
+        },
+      },
+      y: {
+        min: 0,
+        max: 100,
+        grid: { color: palette.grid, drawBorder: false },
+        ticks: {
+          color: palette.textMuted,
+          font: { family: '"JetBrains Mono", monospace', size: 11 },
+          callback: (value) => value + '%',
+        },
+      },
     },
-    y: {
-      min: 0,
-      max: 100,
-      grid: { color: '#e8eaed', drawBorder: false },
-      ticks: {
-        color: '#5a6572',
-        font: { size: 11 },
-        callback: (value) => value + '%'
-      }
-    }
   }
-}
+})
 </script>
 
 <style scoped>

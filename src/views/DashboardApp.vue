@@ -2,8 +2,11 @@
   <div class="dashboard-wrapper">
     <aside class="sidebar" :class="{ open: sidebarOpen }">
       <div class="sidebar-brand">
-        <h1>Site status</h1>
-        <div class="sidebar-tagline">Monitoring dashboard</div>
+        <div class="sidebar-brand-row">
+          <div class="logo-mark" aria-hidden="true"></div>
+          <h1>Site status</h1>
+        </div>
+        <div class="sidebar-tagline">Monitoring console</div>
       </div>
 
       <nav>
@@ -73,6 +76,7 @@
           <p class="header-status-note">{{ headerSubtitle }}</p>
         </div>
         <div class="header-right">
+          <ThemeToggle />
           <UserMenu />
           <button
             class="btn-refresh"
@@ -164,6 +168,7 @@ import ResponseTimeChart from '../components/ResponseTimeChart.vue'
 import HistoryChart from '../components/HistoryChart.vue'
 import HistoryLog from '../components/HistoryLog.vue'
 import UserMenu from '../components/UserMenu.vue'
+import ThemeToggle from '../components/ThemeToggle.vue'
 
 const route = useRoute()
 const router = useRouter()

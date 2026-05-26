@@ -5,7 +5,7 @@
     </div>
     <div class="dashboard-card-body">
       <div class="chart-container">
-        <Doughnut :data="chartData" :options="chartOptions" />
+        <Doughnut :key="theme" :data="chartData" :options="chartOptions" />
       </div>
     </div>
   </div>
@@ -14,71 +14,63 @@
 <script setup>
 import { computed } from 'vue'
 import { Doughnut } from 'vue-chartjs'
-import { 
-  Chart as ChartJS, 
-  ArcElement, 
-  Tooltip, 
-  Legend 
-} from 'chart.js'
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
+import { useTheme } from '../composables/useTheme.js'
+import { getChartPalette, chartTooltipPlugin, chartLegendLabels } from '../utils/chartTheme.js'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
 const props = defineProps({
   statuses: {
     type: Array,
-    default: () => []
-  }
+    default: () => [],
+  },
 })
+
+const { theme } = useTheme()
 
 const chartData = computed(() => {
-  const online = props.statuses.filter(s => s.status === 'OK').length
-  const offline = props.statuses.filter(s => s.status !== 'OK').length
-  
+  const palette = getChartPalette()
+  const online = props.statuses.filter((s) => s.status === 'OK').length
+  const offline = props.statuses.filter((s) => s.status !== 'OK').length
+
   return {
     labels: ['Online', 'Offline'],
-    datasets: [{
-      data: [online || 1, offline],
-      backgroundColor: ['#3d7a52', '#b54545'],
-      borderColor: ['#2f6f44', '#a82a2a'],
-      borderWidth: 2,
-      hoverOffset: 4
-    }]
+    datasets: [
+      {
+        data: [online || 1, offline],
+        backgroundColor: [palette.success, palette.danger],
+        borderColor: [palette.successBorder, palette.dangerBorder],
+        borderWidth: 2,
+        hoverOffset: 4,
+      },
+    ],
   }
 })
 
-const chartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  cutout: '70%',
-  plugins: {
-    legend: {
-      position: 'bottom',
-      labels: {
-        color: '#5a6572',
-        padding: 20,
-        font: {
-          size: 12
+const chartOptions = computed(() => {
+  const palette = getChartPalette()
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '70%',
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: chartLegendLabels(palette),
+      },
+      tooltip: {
+        ...chartTooltipPlugin(palette),
+        displayColors: true,
+        callbacks: {
+          label: (context) => {
+            const total = context.dataset.data.reduce((a, b) => a + b, 0)
+            const percentage = Math.round((context.raw / total) * 100)
+            return ` ${context.label}: ${context.raw} (${percentage}%)`
+          },
         },
-        usePointStyle: true,
-        pointStyle: 'circle'
-      }
+      },
     },
-    tooltip: {
-      backgroundColor: '#ffffff',
-      titleColor: '#1c2430',
-      bodyColor: '#5a6572',
-      borderColor: '#d9dde3',
-      borderWidth: 1,
-      padding: 12,
-      displayColors: true,
-      callbacks: {
-        label: (context) => {
-          const total = context.dataset.data.reduce((a, b) => a + b, 0)
-          const percentage = Math.round((context.raw / total) * 100)
-          return ` ${context.label}: ${context.raw} (${percentage}%)`
-        }
-      }
-    }
   }
-}
+})
 </script>

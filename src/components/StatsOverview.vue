@@ -129,8 +129,8 @@ const lastCheckDate = computed(() => {
 }
 
 .stat-card-clickable:hover {
-  border-color: #b8c0cc;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border-color: var(--border-active);
+  box-shadow: 0 0 0 1px rgba(255, 51, 102, 0.12);
 }
 
 .stat-card-clickable:focus {
