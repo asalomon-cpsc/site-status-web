@@ -33,75 +33,118 @@
       </div>
     </div>
     <div class="dashboard-card-body" style="padding: 0;">
-      <div v-if="filteredStatuses.length === 0" class="empty-state">
-        <h4>No records</h4>
-        <p>There is no status data to show for this filter.</p>
+      <div v-if="initialLoading" class="empty-state">
+        <p>Loading history…</p>
       </div>
-      <table v-else class="data-table">
-        <thead>
-          <tr>
-            <th>Result</th>
-            <th>Name</th>
-            <th>URL</th>
-            <th>Time</th>
-            <th>Detail</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(status, idx) in filteredStatuses" :key="`${status.rowKey}-${idx}-${status.date}`">
-            <td>
-              <span class="status-badge" :class="status.status === 'OK' ? 'online' : 'offline'">
-                {{ status.status === 'OK' ? 'OK' : 'Failed' }}
-              </span>
-            </td>
-            <td>
-              <strong>{{ status.urlName }}</strong>
-            </td>
-            <td>
-              <a class="link-dashboard" :href="status.url" target="_blank" rel="noopener noreferrer">
-                {{ truncateUrl(status.url) }}
-              </a>
-            </td>
-            <td class="text-secondary">
-              {{ formatDate(status.date) }}
-            </td>
-            <td>
-              <span v-if="status.status === 'OK'" class="text-ok">Normal</span>
-              <span v-else class="text-err">{{ status.description || 'Error' }}</span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <template v-else>
+        <div v-if="filteredStatuses.length === 0" class="empty-state">
+          <h4>No records</h4>
+          <p>There is no status data to show for this filter.</p>
+        </div>
+        <template v-else>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Result</th>
+                <th>Name</th>
+                <th>URL</th>
+                <th>Time</th>
+                <th>Detail</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(status, idx) in filteredStatuses" :key="`${status.rowKey}-${idx}-${status.date}`">
+                <td>
+                  <span class="status-badge" :class="status.status === 'OK' ? 'online' : 'offline'">
+                    {{ status.status === 'OK' ? 'OK' : 'Failed' }}
+                  </span>
+                </td>
+                <td>
+                  <strong>{{ status.urlName }}</strong>
+                </td>
+                <td>
+                  <a class="link-dashboard" :href="status.url" target="_blank" rel="noopener noreferrer">
+                    {{ truncateUrl(status.url) }}
+                  </a>
+                </td>
+                <td class="text-secondary">
+                  {{ formatDate(status.date) }}
+                </td>
+                <td>
+                  <span v-if="status.status === 'OK'" class="text-ok">Normal</span>
+                  <span v-else class="text-err">{{ status.description || 'Error' }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div v-if="nextPageToken" class="load-more-row">
+            <button
+              type="button"
+              class="btn btn-secondary btn-sm"
+              :disabled="loadingMore"
+              @click="loadMore"
+            >
+              {{ loadingMore ? 'Loading…' : 'Load more' }}
+            </button>
+          </div>
+        </template>
+      </template>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useApi } from '../composables/useApi'
+import { toDisplayHistoryRows } from '../utils/statusHistory'
 
 const props = defineProps({
   statuses: {
     type: Array,
     default: () => []
-  },
-  /** When non-empty (from statushistoryreader), log shows historical checks instead of the current snapshot. */
-  historyRows: {
-    type: Array,
-    default: () => []
   }
 })
 
+const { fetchStatusHistory } = useApi()
+
+const historyItems = ref([])
+const nextPageToken = ref(null)
+const initialLoading = ref(true)
+const loadingMore = ref(false)
 const filter = ref('all')
 
+async function loadInitial() {
+  initialLoading.value = true
+  const result = await fetchStatusHistory()
+  historyItems.value = toDisplayHistoryRows(result.items)
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+  nextPageToken.value = result.nextPageToken
+  initialLoading.value = false
+}
+
+async function loadMore() {
+  if (!nextPageToken.value || loadingMore.value) return
+  loadingMore.value = true
+  const result = await fetchStatusHistory(nextPageToken.value)
+  const newItems = toDisplayHistoryRows(result.items)
+  historyItems.value = [...historyItems.value, ...newItems]
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+  nextPageToken.value = result.nextPageToken
+  loadingMore.value = false
+}
+
 const sourceRows = computed(() =>
-  props.historyRows.length > 0 ? props.historyRows : props.statuses
+  historyItems.value.length > 0 ? historyItems.value : props.statuses
 )
 
-const logSourceNote = computed(() =>
-  props.historyRows.length > 0
-    ? 'Rows from status history (all loaded checks).'
-    : 'Current snapshot only; open History after history API returns data.'
-)
+const logSourceNote = computed(() => {
+  if (initialLoading.value) return 'Loading…'
+  if (historyItems.value.length > 0) {
+    const more = nextPageToken.value ? ' · More available — use Load more.' : ' · All pages loaded.'
+    return `${historyItems.value.length} row(s)${more}`
+  }
+  return 'Showing current snapshot only. History not yet available.'
+})
 
 const filteredStatuses = computed(() => {
   const list = sourceRows.value
@@ -134,6 +177,8 @@ function truncateUrl(url) {
   }
   return url
 }
+
+onMounted(loadInitial)
 </script>
 
 <style scoped>
@@ -165,5 +210,12 @@ function truncateUrl(url) {
 
 .text-err {
   color: var(--danger);
+}
+
+.load-more-row {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+  border-top: 1px solid var(--border);
 }
 </style>
