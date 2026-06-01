@@ -53,15 +53,37 @@ function getStatsReaderFunctionName() {
 }
 
 function getBaseUrl() {
-  // Proxy only during `vite` dev — never in production builds (Netlify has no /__healthchker route;
-  // same-origin poll would return SPA index.html with a 200).
+  // Proxy only during `vite` dev — never in production builds (Netlify has no /__healthchker route).
   const useProxy =
     import.meta.env.DEV && import.meta.env.VITE_DEV_PROXY === 'true'
   if (useProxy && typeof window !== 'undefined') {
     return `${window.location.origin}/__healthchker/api`.replace(/\/$/, '')
   }
-  const raw = import.meta.env.VITE_API_BASE_URL || DEFAULT_BASE
-  return raw.replace(/\/$/, '')
+
+  let base = String(import.meta.env.VITE_API_BASE_URL || '').trim()
+  if (!base) base = DEFAULT_BASE
+  base = base.replace(/\/$/, '')
+
+  // Must be absolute — relative values were resolved against window.location (Netlify) by URL().
+  if (!/^https?:\/\//i.test(base)) {
+    console.warn('VITE_API_BASE_URL must be absolute; falling back to default Azure API base.')
+    base = DEFAULT_BASE.replace(/\/$/, '')
+  }
+
+  if (typeof window !== 'undefined') {
+    try {
+      if (new URL(base).origin === window.location.origin) {
+        console.warn(
+          'VITE_API_BASE_URL matches this site origin; falling back to default Azure API base.'
+        )
+        base = DEFAULT_BASE.replace(/\/$/, '')
+      }
+    } catch {
+      base = DEFAULT_BASE.replace(/\/$/, '')
+    }
+  }
+
+  return base
 }
 
 /** True when the body looks like our SPA or any HTML page, not a poller plain-text response. */
@@ -73,11 +95,21 @@ function isSpaOrHtmlBody(text) {
   return false
 }
 
-function pollerResponseError(url) {
+/** For logs only — never show ?code= in UI copy. */
+function redactUrlForLog(href) {
+  try {
+    const u = new URL(href)
+    u.searchParams.delete('code')
+    return u.toString()
+  } catch {
+    return '(invalid url)'
+  }
+}
+
+function pollerResponseError() {
   return (
-    'Poll returned the dashboard HTML instead of Azure Functions output. ' +
-    'Check VITE_API_BASE_URL points at your Function App (…/api), not this site. ' +
-    `Request: ${url}`
+    'Poll hit this website instead of Azure Functions. Set VITE_API_BASE_URL to your ' +
+    'Function App (…azurewebsites.net/api) in Netlify, then trigger a new deploy.'
   )
 }
 
@@ -104,13 +136,11 @@ function requireApiCode() {
  * Build an Azure Functions URL with `code` query param and extra search params.
  */
 function apiUrl(path, searchParams = {}) {
+  const segment = String(path).replace(/^\//, '')
   const base = getBaseUrl()
-  const pathname = path.startsWith('http') ? path : `${base}/${path.replace(/^\//, '')}`
-  const origin =
-    typeof window !== 'undefined' && window.location?.origin
-      ? window.location.origin
-      : DEFAULT_BASE
-  const url = new URL(pathname, origin)
+  const url = path.startsWith('http')
+    ? new URL(path)
+    : new URL(`${base}/${segment}`)
   url.searchParams.set('code', requireApiCode())
   Object.entries(searchParams).forEach(([k, v]) => {
     if (v != null && v !== '') {
@@ -169,13 +199,14 @@ export function useApi() {
       }
 
       if (contentType.includes('text/html') || isSpaOrHtmlBody(message)) {
-        throw new Error(pollerResponseError(pollUrl))
+        console.error('Poll returned HTML; request (redacted):', redactUrlForLog(pollUrl))
+        throw new Error(pollerResponseError())
       }
 
       return { success: true, status: response.status, message }
     } catch (err) {
       error.value = err.message
-      console.error('Error refreshing statuses:', err)
+      console.error('Error refreshing statuses:', err.message)
       return { success: false, error: err.message }
     } finally {
       loading.value = false
