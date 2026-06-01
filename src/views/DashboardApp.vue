@@ -79,17 +79,30 @@
           <ThemeToggle />
           <UserMenu />
           <button
+            class="btn btn-secondary btn-reload"
+            :class="{ loading: isReloading }"
+            @click="handleReload"
+            :disabled="isReloading || isRefreshing"
+            type="button"
+            title="Reloads the latest statuses and history without triggering a new poll."
+            :aria-busy="isReloading"
+            aria-live="polite"
+          >
+            <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+            {{ isReloading ? 'Reloading…' : 'Reload data' }}
+          </button>
+          <button
             class="btn-refresh"
             :class="{ loading: isRefreshing }"
             @click="handleRefresh"
             :disabled="isRefreshing"
             type="button"
-            title="Triggers the configured Azure poll function, then reloads status data."
+            title="Triggers the configured Azure poll function. Results arrive shortly; use Reload data to fetch them."
             :aria-busy="isRefreshing"
             aria-live="polite"
           >
             <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
-            {{ isRefreshing ? 'Working…' : 'Run poll' }}
+            {{ isRefreshing ? 'Submitting…' : 'Run poll' }}
           </button>
         </div>
       </header>
@@ -179,6 +192,7 @@ const sidebarOpen = ref(false)
 const statuses = ref([])
 const statsRaw = ref([])
 const isRefreshing = ref(false)
+const isReloading = ref(false)
 const initialLoading = ref(true)
 const toasts = ref([])
 
@@ -289,26 +303,6 @@ function toastIconClass(type) {
   return 'bi bi-check-circle'
 }
 
-function stripHtml(str) {
-  return str.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
-}
-
-function formatPollerToast(body) {
-  if (!body) return 'Poll started. Loading latest data.'
-  const clean = stripHtml(body)
-  if (
-    /^<!DOCTYPE\s+html/i.test(clean) ||
-    (clean.includes('Site Status Dashboard') && clean.includes('site-status-theme'))
-  ) {
-    return 'Poll misconfigured: received dashboard HTML instead of Azure poller output.'
-  }
-  const m = clean.match(/OrchestrationInstanceId:\s*([a-fA-F0-9-]+)/)
-  if (m) {
-    return `Poll started (run ${m[1]}). Loading latest data.`
-  }
-  return clean.length > 160 ? `${clean.slice(0, 160)}…` : clean
-}
-
 async function loadStatuses() {
   const data = await fetchStatuses()
   statuses.value = data
@@ -338,35 +332,54 @@ async function refreshData() {
 async function handleRefresh() {
   pollBannerError.value = false
   pollBannerBusy.value = true
-  pollBannerText.value = 'Sending poll request to Azure…'
+  pollBannerText.value = 'Submitting poll request…'
   isRefreshing.value = true
 
-  showToast('Poll request sent. Waiting for response…', 'info', 5000)
-
+  // Fire-and-forget: we only confirm the request was accepted, not that the
+  // poll finished. The orchestration runs asynchronously on Azure.
   const result = await refreshStatuses()
 
+  isRefreshing.value = false
+  pollBannerBusy.value = false
+
   if (result.success) {
-    const msg = formatPollerToast(result.message)
-    pollBannerText.value = msg
-    showToast(msg, 'success', 10000)
-    await new Promise((r) => setTimeout(r, 3000))
-    pollBannerText.value = 'Loading latest statuses and history…'
-    await refreshData()
-    pollBannerBusy.value = false
-    const t = new Date().toLocaleTimeString()
-    pollBannerText.value = `Dashboard updated at ${t}.`
-    showToast(`Data reloaded at ${t}.`, 'success', 5000)
-    isRefreshing.value = false
+    const submitted =
+      'Poll request submitted. New results take a moment — click Reload data in a bit to see updated statuses.'
+    pollBannerText.value = submitted
+    showToast('Poll request submitted. Click Reload data in a bit.', 'success', 8000)
     setTimeout(() => {
       pollBannerText.value = ''
-    }, 8000)
+    }, 12000)
   } else {
-    pollBannerBusy.value = false
     pollBannerError.value = true
     const err = result.error || 'Poll request failed'
     pollBannerText.value = err
     showToast(err, 'error', 10000)
-    isRefreshing.value = false
+  }
+}
+
+async function handleReload() {
+  if (isReloading.value) return
+  isReloading.value = true
+  pollBannerError.value = false
+  pollBannerBusy.value = true
+  pollBannerText.value = 'Reloading latest statuses and history…'
+
+  try {
+    await refreshData()
+    const t = new Date().toLocaleTimeString()
+    pollBannerText.value = `Dashboard updated at ${t}.`
+    showToast(`Data reloaded at ${t}.`, 'success', 4000)
+    setTimeout(() => {
+      pollBannerText.value = ''
+    }, 6000)
+  } catch (err) {
+    pollBannerError.value = true
+    pollBannerText.value = 'Failed to reload data. Try again in a moment.'
+    showToast('Failed to reload data.', 'error', 6000)
+  } finally {
+    pollBannerBusy.value = false
+    isReloading.value = false
   }
 }
 
@@ -392,5 +405,21 @@ onMounted(async () => {
   gap: 0.75rem;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.btn-reload {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+}
+
+.btn-reload:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.btn-reload.loading i {
+  animation: spin 0.9s linear infinite;
 }
 </style>
