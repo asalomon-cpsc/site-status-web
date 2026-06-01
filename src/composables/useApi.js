@@ -53,14 +53,32 @@ function getStatsReaderFunctionName() {
 }
 
 function getBaseUrl() {
-  // Dev + VITE_DEV_PROXY: call /__healthchker/api/... on the Vite host so the browser stays same-origin.
-  // Production (or dev with proxy off): use VITE_API_BASE_URL or default Azure URL — requires CORS on the Function App.
-  const useProxy = import.meta.env.VITE_DEV_PROXY === 'true'
+  // Proxy only during `vite` dev — never in production builds (Netlify has no /__healthchker route;
+  // same-origin poll would return SPA index.html with a 200).
+  const useProxy =
+    import.meta.env.DEV && import.meta.env.VITE_DEV_PROXY === 'true'
   if (useProxy && typeof window !== 'undefined') {
     return `${window.location.origin}/__healthchker/api`.replace(/\/$/, '')
   }
   const raw = import.meta.env.VITE_API_BASE_URL || DEFAULT_BASE
   return raw.replace(/\/$/, '')
+}
+
+/** True when the body looks like our SPA or any HTML page, not a poller plain-text response. */
+function isSpaOrHtmlBody(text) {
+  if (!text || typeof text !== 'string') return false
+  const head = text.slice(0, 800).trim()
+  if (/^<!DOCTYPE\s+html/i.test(head) || /<html[\s>]/i.test(head)) return true
+  if (/Site Status Dashboard/i.test(head) && /site-status-theme/i.test(head)) return true
+  return false
+}
+
+function pollerResponseError(url) {
+  return (
+    'Poll returned the dashboard HTML instead of Azure Functions output. ' +
+    'Check VITE_API_BASE_URL points at your Function App (…/api), not this site. ' +
+    `Request: ${url}`
+  )
 }
 
 function getApiCode() {
@@ -135,17 +153,25 @@ export function useApi() {
     loading.value = true
     error.value = null
 
+    const pollUrl = apiUrl(getPollerFunctionName())
+
     try {
-      const response = await fetch(apiUrl(getPollerFunctionName()), {
+      const response = await fetch(pollUrl, {
         method: 'GET',
         credentials: 'omit'
       })
+
+      const contentType = response.headers.get('content-type') || ''
+      const message = (await response.text()).trim()
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
 
-      const message = (await response.text()).trim()
+      if (contentType.includes('text/html') || isSpaOrHtmlBody(message)) {
+        throw new Error(pollerResponseError(pollUrl))
+      }
+
       return { success: true, status: response.status, message }
     } catch (err) {
       error.value = err.message

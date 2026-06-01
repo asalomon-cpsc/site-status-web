@@ -296,6 +296,12 @@ function stripHtml(str) {
 function formatPollerToast(body) {
   if (!body) return 'Poll started. Loading latest data.'
   const clean = stripHtml(body)
+  if (
+    /^<!DOCTYPE\s+html/i.test(clean) ||
+    (clean.includes('Site Status Dashboard') && clean.includes('site-status-theme'))
+  ) {
+    return 'Poll misconfigured: received dashboard HTML instead of Azure poller output.'
+  }
   const m = clean.match(/OrchestrationInstanceId:\s*([a-fA-F0-9-]+)/)
   if (m) {
     return `Poll started (run ${m[1]}). Loading latest data.`

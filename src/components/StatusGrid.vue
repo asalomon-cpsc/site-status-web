@@ -77,7 +77,7 @@
           <div class="status-item-footer">
             <span>{{ formatDate(status.date) }}</span>
             <span v-if="status.status === 'OK'" class="status-item-detail ok">Normal</span>
-            <span v-else class="status-item-detail err">{{ status.description || 'Error' }}</span>
+            <span v-else class="status-item-detail err">{{ formatErrorDescription(status.description) }}</span>
           </div>
         </div>
       </div>
@@ -162,6 +162,18 @@ function formatDate(dateString) {
     hour: '2-digit',
     minute: '2-digit'
   })
+}
+
+function formatErrorDescription(desc) {
+  if (!desc) return 'Error'
+  const clean = String(desc).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+  if (
+    clean.includes('Site Status Dashboard') &&
+    clean.includes('site-status-theme')
+  ) {
+    return 'Received dashboard HTML (check monitored URL or API base).'
+  }
+  return clean.length > 120 ? `${clean.slice(0, 120)}…` : clean
 }
 </script>
 
