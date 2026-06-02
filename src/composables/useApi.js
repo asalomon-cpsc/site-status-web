@@ -179,16 +179,25 @@ export function useApi() {
     }
   }
 
-  async function refreshStatuses() {
+  /**
+   * Submit a poll. Fire-and-forget friendly: the caller should NOT block the UI
+   * on this. We cap how long we wait for the HTTP response; if the poller keeps
+   * the request open past `timeoutMs`, we abort waiting and report `submitted`
+   * (the orchestration still runs on Azure).
+   */
+  async function refreshStatuses({ timeoutMs = 12000 } = {}) {
     loading.value = true
     error.value = null
 
     const pollUrl = apiUrl(getPollerFunctionName())
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), timeoutMs)
 
     try {
       const response = await fetch(pollUrl, {
         method: 'GET',
-        credentials: 'omit'
+        credentials: 'omit',
+        signal: controller.signal
       })
 
       const contentType = response.headers.get('content-type') || ''
@@ -203,12 +212,17 @@ export function useApi() {
         throw new Error(pollerResponseError())
       }
 
-      return { success: true, status: response.status, message }
+      return { success: true, submitted: true, status: response.status, message }
     } catch (err) {
+      // Aborting after the timeout is expected for long-running polls — treat as submitted.
+      if (err && err.name === 'AbortError') {
+        return { success: true, submitted: true, status: 0, message: '' }
+      }
       error.value = err.message
       console.error('Error refreshing statuses:', err.message)
       return { success: false, error: err.message }
     } finally {
+      clearTimeout(timer)
       loading.value = false
     }
   }

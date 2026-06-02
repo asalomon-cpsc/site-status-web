@@ -329,33 +329,44 @@ async function refreshData() {
   await Promise.all([loadStatuses(), loadHistory()])
 }
 
-async function handleRefresh() {
+function handleRefresh() {
+  if (isRefreshing.value) return
+
   pollBannerError.value = false
-  pollBannerBusy.value = true
-  pollBannerText.value = 'Submitting poll request…'
+  pollBannerBusy.value = false
   isRefreshing.value = true
 
-  // Fire-and-forget: we only confirm the request was accepted, not that the
-  // poll finished. The orchestration runs asynchronously on Azure.
-  const result = await refreshStatuses()
+  // Fire-and-forget: show "submitted" immediately and never block the button on
+  // the poll request — the orchestration runs asynchronously on Azure and may
+  // keep the HTTP connection open.
+  pollBannerText.value =
+    'Poll request submitted. New results take a moment — click Reload data in a bit to see updated statuses.'
+  showToast('Poll request submitted. Click Reload data in a bit.', 'success', 8000)
 
-  isRefreshing.value = false
-  pollBannerBusy.value = false
+  // Release the button shortly after the click registers.
+  setTimeout(() => {
+    isRefreshing.value = false
+  }, 1000)
 
-  if (result.success) {
-    const submitted =
-      'Poll request submitted. New results take a moment — click Reload data in a bit to see updated statuses.'
-    pollBannerText.value = submitted
-    showToast('Poll request submitted. Click Reload data in a bit.', 'success', 8000)
-    setTimeout(() => {
-      pollBannerText.value = ''
-    }, 12000)
-  } else {
-    pollBannerError.value = true
-    const err = result.error || 'Poll request failed'
-    pollBannerText.value = err
-    showToast(err, 'error', 10000)
-  }
+  // Surface only a definitive failure; success/timeout needs no further action.
+  refreshStatuses()
+    .then((result) => {
+      if (result && result.success === false) {
+        pollBannerError.value = true
+        const err = result.error || 'Poll request failed'
+        pollBannerText.value = err
+        showToast(err, 'error', 10000)
+      }
+    })
+    .catch(() => {
+      pollBannerError.value = true
+      pollBannerText.value = 'Poll request failed to send.'
+      showToast('Poll request failed to send.', 'error', 8000)
+    })
+
+  setTimeout(() => {
+    if (!pollBannerError.value) pollBannerText.value = ''
+  }, 12000)
 }
 
 async function handleReload() {
