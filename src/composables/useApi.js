@@ -180,51 +180,52 @@ export function useApi() {
   }
 
   /**
-   * Submit a poll. Fire-and-forget friendly: the caller should NOT block the UI
-   * on this. We cap how long we wait for the HTTP response; if the poller keeps
-   * the request open past `timeoutMs`, we abort waiting and report `submitted`
-   * (the orchestration still runs on Azure).
+   * Fire-and-forget poll submission. Returns immediately after starting fetch;
+   * does not wait for the poller HTTP response (orchestration may run for minutes).
    */
-  async function refreshStatuses({ timeoutMs = 12000 } = {}) {
-    loading.value = true
-    error.value = null
-
-    const pollUrl = apiUrl(getPollerFunctionName())
-    const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), timeoutMs)
-
+  function submitPollRequest() {
+    let pollUrl
     try {
-      const response = await fetch(pollUrl, {
-        method: 'GET',
-        credentials: 'omit',
-        signal: controller.signal
+      pollUrl = apiUrl(getPollerFunctionName())
+    } catch (err) {
+      return {
+        ok: false,
+        error: err.message || 'Could not build poll request URL.',
+      }
+    }
+
+    void fetch(pollUrl, { method: 'GET', credentials: 'omit' })
+      .then((response) => {
+        if (!response.ok) {
+          console.warn(
+            'Poll request HTTP error:',
+            response.status,
+            redactUrlForLog(pollUrl)
+          )
+          return null
+        }
+        return response.text()
+      })
+      .then((body) => {
+        if (body && isSpaOrHtmlBody(body)) {
+          console.error('Poll returned HTML; request (redacted):', redactUrlForLog(pollUrl))
+        }
+      })
+      .catch((err) => {
+        console.warn('Poll background request failed:', err.message || err)
       })
 
-      const contentType = response.headers.get('content-type') || ''
-      const message = (await response.text()).trim()
+    return { ok: true }
+  }
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      if (contentType.includes('text/html') || isSpaOrHtmlBody(message)) {
-        console.error('Poll returned HTML; request (redacted):', redactUrlForLog(pollUrl))
-        throw new Error(pollerResponseError())
-      }
-
-      return { success: true, submitted: true, status: response.status, message }
-    } catch (err) {
-      // Aborting after the timeout is expected for long-running polls — treat as submitted.
-      if (err && err.name === 'AbortError') {
-        return { success: true, submitted: true, status: 0, message: '' }
-      }
-      error.value = err.message
-      console.error('Error refreshing statuses:', err.message)
-      return { success: false, error: err.message }
-    } finally {
-      clearTimeout(timer)
-      loading.value = false
+  /** @deprecated Prefer submitPollRequest for UI; kept for callers that need to await. */
+  async function refreshStatuses() {
+    const sent = submitPollRequest()
+    if (!sent.ok) {
+      error.value = sent.error
+      return { success: false, error: sent.error }
     }
+    return { success: true, submitted: true, status: 0, message: '' }
   }
 
   async function fetchUrls() {
@@ -401,6 +402,7 @@ export function useApi() {
     fetchStatusHistory,
     fetchStatusStats,
     refreshStatuses,
+    submitPollRequest,
     fetchUrls,
     addUrl,
     updateUrl,

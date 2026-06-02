@@ -184,7 +184,7 @@ import ThemeToggle from '../components/ThemeToggle.vue'
 
 const route = useRoute()
 const router = useRouter()
-const { fetchStatuses, fetchStatusStats, refreshStatuses } = useApi()
+const { fetchStatuses, fetchStatusStats, submitPollRequest } = useApi()
 
 const activeTab = ref('statuses')
 const statusesFilter = ref('all')
@@ -332,37 +332,27 @@ async function refreshData() {
 function handleRefresh() {
   if (isRefreshing.value) return
 
+  isRefreshing.value = true
   pollBannerError.value = false
   pollBannerBusy.value = false
-  isRefreshing.value = true
 
-  // Fire-and-forget: show "submitted" immediately and never block the button on
-  // the poll request — the orchestration runs asynchronously on Azure and may
-  // keep the HTTP connection open.
+  const sent = submitPollRequest()
+
+  if (!sent.ok) {
+    pollBannerError.value = true
+    pollBannerText.value = sent.error
+    showToast(sent.error, 'error', 10000)
+    isRefreshing.value = false
+    return
+  }
+
   pollBannerText.value =
     'Poll request submitted. New results take a moment — click Reload data in a bit to see updated statuses.'
   showToast('Poll request submitted. Click Reload data in a bit.', 'success', 8000)
 
-  // Release the button shortly after the click registers.
   setTimeout(() => {
     isRefreshing.value = false
-  }, 1000)
-
-  // Surface only a definitive failure; success/timeout needs no further action.
-  refreshStatuses()
-    .then((result) => {
-      if (result && result.success === false) {
-        pollBannerError.value = true
-        const err = result.error || 'Poll request failed'
-        pollBannerText.value = err
-        showToast(err, 'error', 10000)
-      }
-    })
-    .catch(() => {
-      pollBannerError.value = true
-      pollBannerText.value = 'Poll request failed to send.'
-      showToast('Poll request failed to send.', 'error', 8000)
-    })
+  }, 800)
 
   setTimeout(() => {
     if (!pollBannerError.value) pollBannerText.value = ''
