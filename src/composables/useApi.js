@@ -132,17 +132,13 @@ function requireApiCode() {
   return code
 }
 
-function isAbsoluteHttpUrl(path) {
-  return /^https?:\/\//i.test(String(path))
-}
-
 /**
  * Build an Azure Functions URL with `code` query param and extra search params.
  */
 function apiUrl(path, searchParams = {}) {
   const segment = String(path).replace(/^\//, '')
   const base = getBaseUrl()
-  const url = isAbsoluteHttpUrl(path)
+  const url = path.startsWith('http')
     ? new URL(path)
     : new URL(`${base}/${segment}`)
   url.searchParams.set('code', requireApiCode())
