@@ -16,7 +16,7 @@ export function normalizeDomain(domainOrUrl) {
 
 /** Common header names for autocomplete / quick-add (names only — never values). */
 export const SUGGESTED_HEADERS = [
-  { name: 'User-Agent', placeholder: 'e.g. azure_cpsc or WatchtowerMonitor/1.0' },
+  { name: 'User-Agent', placeholder: 'e.g. BilomaxBot/1.0 or WatchtowerMonitor/1.0' },
   { name: 'Authorization', placeholder: 'e.g. Bearer …' },
   { name: 'X-Api-Key', placeholder: 'API key' },
   { name: 'Accept', placeholder: 'e.g. application/json' },
@@ -39,7 +39,7 @@ export function hostFromUrl(url) {
   }
 }
 
-/** Exact host, else longest suffix match (cpsc.gov → www.cpsc.gov). */
+/** Exact host, else longest suffix match (bilomax.com → www.bilomax.com). */
 export function matchDomain(url, domains) {
   const host = hostFromUrl(url)
   if (!host) return null

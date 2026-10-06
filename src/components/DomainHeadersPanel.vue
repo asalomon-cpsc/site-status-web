@@ -91,7 +91,7 @@
               type="text"
               class="form-control"
               :readonly="isEditing"
-              placeholder="e.g. cpsc.gov or https://www.cpsc.gov"
+              placeholder="e.g. bilomax.com or https://www.bilomax.com"
               autocomplete="off"
             >
           </div>
@@ -102,7 +102,7 @@
               v-model="form.label"
               type="text"
               class="form-control"
-              placeholder="e.g. CPSC sites"
+              placeholder="e.g. Bilomax sites"
               autocomplete="off"
             >
           </div>
@@ -115,7 +115,7 @@
               </label>
             </div>
             <p class="headers-hint">
-              Example: User-Agent → azure_cpsc for hosts that require the legacy agent.
+              Example: User-Agent → BilomaxBot/1.0 when a host expects a custom agent.
             </p>
             <div class="headers-editor">
               <div v-for="(h, i) in form.headers" :key="i" class="header-row">
@@ -251,7 +251,7 @@ function close() {
 async function save() {
   const domain = normalizeDomain(form.value.domain)
   if (!domain) {
-    formError.value = 'Enter a domain (e.g. cpsc.gov)'
+    formError.value = 'Enter a domain (e.g. bilomax.com)'
     return
   }
   saving.value = true
