@@ -159,6 +159,53 @@
               </label>
             </div>
           </div>
+          <div class="mb-3">
+            <div class="headers-label-row">
+              <label class="form-label mb-0">Custom headers</label>
+              <label class="headers-show">
+                <input v-model="showHeaderValues" type="checkbox">
+                Show values
+              </label>
+            </div>
+            <p class="headers-hint">
+              Sent with each poll (e.g. Authorization, X-Api-Key). Never shown on the public directory.
+            </p>
+            <div class="headers-editor">
+              <div
+                v-for="(row, index) in formData.headers"
+                :key="index"
+                class="header-row"
+              >
+                <input
+                  v-model="row.key"
+                  type="text"
+                  class="form-control"
+                  placeholder="Header name"
+                  autocomplete="off"
+                  spellcheck="false"
+                >
+                <input
+                  v-model="row.value"
+                  :type="showHeaderValues ? 'text' : 'password'"
+                  class="form-control"
+                  placeholder="Value"
+                  autocomplete="off"
+                  spellcheck="false"
+                >
+                <button
+                  type="button"
+                  class="btn-icon danger"
+                  title="Remove header"
+                  @click="removeHeaderRow(index)"
+                >
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
+              <button type="button" class="btn btn-secondary btn-sm" @click="addHeaderRow">
+                + Add header
+              </button>
+            </div>
+          </div>
           <div
             v-if="formMessage"
             class="small"
@@ -209,13 +256,17 @@ const actionMessage = ref('')
 const actionSuccess = ref(false)
 const nameInput = ref(null)
 const categoryOptions = CATEGORY_OPTIONS
+const showHeaderValues = ref(true)
+
+const emptyHeaderRow = () => ({ key: '', value: '' })
 
 const emptyForm = () => ({
   urlName: '',
   url: '',
   category: 'General',
   categoryCustom: '',
-  visibility: 'private'
+  visibility: 'private',
+  headers: [emptyHeaderRow()]
 })
 
 const formData = ref(emptyForm())
@@ -239,6 +290,48 @@ function splitCategory(raw) {
   return { category: 'Custom', categoryCustom: value }
 }
 
+function parseHeaders(url) {
+  const raw = url.CustomHeadersJson || url.customHeadersJson || url.headers || url.Headers
+  if (!raw) return [emptyHeaderRow()]
+
+  let map = null
+  if (typeof raw === 'string') {
+    try {
+      map = JSON.parse(raw)
+    } catch {
+      return [emptyHeaderRow()]
+    }
+  } else if (Array.isArray(raw)) {
+    const rows = raw
+      .map((row) => ({
+        key: String(row?.key || row?.name || '').trim(),
+        value: row?.value == null ? '' : String(row.value)
+      }))
+      .filter((row) => row.key)
+    return rows.length ? rows : [emptyHeaderRow()]
+  } else if (typeof raw === 'object') {
+    map = raw
+  }
+
+  if (!map || typeof map !== 'object') return [emptyHeaderRow()]
+  const rows = Object.entries(map).map(([key, value]) => ({
+    key,
+    value: value == null ? '' : String(value)
+  }))
+  return rows.length ? rows : [emptyHeaderRow()]
+}
+
+function addHeaderRow() {
+  formData.value.headers.push(emptyHeaderRow())
+}
+
+function removeHeaderRow(index) {
+  formData.value.headers.splice(index, 1)
+  if (formData.value.headers.length === 0) {
+    formData.value.headers.push(emptyHeaderRow())
+  }
+}
+
 async function loadUrls() {
   const data = await fetchUrls()
   urls.value = Array.isArray(data) ? data : []
@@ -255,6 +348,7 @@ function lockBodyScroll(lock) {
 
 async function openAddModal() {
   isEditing.value = false
+  showHeaderValues.value = true
   formData.value = emptyForm()
   formMessage.value = ''
   modalOpen.value = true
@@ -266,12 +360,14 @@ async function openAddModal() {
 async function openEditModal(url) {
   const split = splitCategory(url.Category || url.category)
   isEditing.value = true
+  showHeaderValues.value = false
   formData.value = {
     urlName: url.UrlName || url.urlName || '',
     url: url.Url || url.url || '',
     category: split.category,
     categoryCustom: split.categoryCustom,
-    visibility: url.Visibility || url.visibility || 'private'
+    visibility: url.Visibility || url.visibility || 'private',
+    headers: parseHeaders(url)
   }
   formMessage.value = ''
   modalOpen.value = true
@@ -306,7 +402,8 @@ async function handleSave() {
     urlName: formData.value.urlName.trim(),
     url: formData.value.url.trim(),
     category: resolveCategory(formData.value.category, formData.value.categoryCustom),
-    visibility: formData.value.visibility === 'public' ? 'public' : 'private'
+    visibility: formData.value.visibility === 'public' ? 'public' : 'private',
+    headers: formData.value.headers
   }
 
   const result = isEditing.value
@@ -405,6 +502,45 @@ onUnmounted(() => lockBodyScroll(false))
   color: var(--text-muted);
   font-size: 0.75rem;
 }
+
+.headers-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.headers-show {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  cursor: pointer;
+  margin: 0;
+}
+
+.headers-hint {
+  margin: 0 0 0.55rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.headers-editor {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.header-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 0.4rem;
+  align-items: center;
+}
 </style>
 
 <!-- Unscoped: Teleport-to-body must not depend on data-v-* for stacking / clicks -->
@@ -434,8 +570,8 @@ onUnmounted(() => lockBodyScroll(false))
 .url-modal-dialog {
   position: relative;
   z-index: 1;
-  width: min(480px, 100%);
-  max-height: min(90vh, 720px);
+  width: min(560px, 100%);
+  max-height: min(90vh, 780px);
   overflow: auto;
   background: var(--bg-panel, #141414);
   border: 1px solid var(--border-color, #333);

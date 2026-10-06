@@ -169,6 +169,26 @@ async function authHeaders(extraHeaders = {}) {
     : extraHeaders
 }
 
+/** Normalize header rows → { Key: value } for urlPersister. */
+function buildUrlPayload(urlData) {
+  const headers = {}
+  const rows = Array.isArray(urlData.headers) ? urlData.headers : []
+  for (const row of rows) {
+    const key = String(row?.key || row?.name || '').trim()
+    const value = row?.value == null ? '' : String(row.value)
+    if (!key) continue
+    headers[key] = value
+  }
+
+  return {
+    urlName: urlData.urlName,
+    url: urlData.url,
+    category: urlData.category || 'General',
+    visibility: urlData.visibility === 'public' ? 'public' : 'private',
+    headers
+  }
+}
+
 export function useApi() {
   const loading = ref(false)
   const error = ref(null)
@@ -320,14 +340,7 @@ export function useApi() {
         headers: await authHeaders({
           'Content-Type': 'application/json'
         }),
-        body: JSON.stringify([
-          {
-            urlName: urlData.urlName,
-            url: urlData.url,
-            category: urlData.category || 'General',
-            visibility: urlData.visibility === 'public' ? 'public' : 'private'
-          }
-        ])
+        body: JSON.stringify([buildUrlPayload(urlData)])
       })
 
       if (!response.ok) {
@@ -355,14 +368,7 @@ export function useApi() {
         headers: await authHeaders({
           'Content-Type': 'application/json'
         }),
-        body: JSON.stringify([
-          {
-            urlName: urlData.urlName,
-            url: urlData.url,
-            category: urlData.category || 'General',
-            visibility: urlData.visibility === 'public' ? 'public' : 'private'
-          }
-        ])
+        body: JSON.stringify([buildUrlPayload(urlData)])
       })
 
       if (!response.ok) {
