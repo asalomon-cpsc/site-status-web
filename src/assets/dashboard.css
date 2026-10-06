@@ -606,11 +606,27 @@ body::before {
   color: var(--color-danger);
 }
 
+/* Bootstrap modal must sit above sidebar (z-index 100) and any overlays.
+   UrlManager teleports the dialog to <body> so overflow:hidden on .dashboard-wrapper
+   cannot trap focus / block pointer events. */
+.modal {
+  z-index: 10600;
+}
+
+.modal-backdrop {
+  z-index: 10590;
+}
+
 .modal-content {
   background: var(--bg-panel);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   color: var(--text-main);
+  pointer-events: auto;
+}
+
+.modal-dialog {
+  pointer-events: auto;
 }
 
 .modal-header {

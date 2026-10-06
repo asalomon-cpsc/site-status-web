@@ -1,7 +1,8 @@
 import { createApp } from 'vue'
+import { clerkPlugin } from '@clerk/vue'
 import App from './App.vue'
 import router from './router'
-import { initAuth, getAccount } from './auth/msalClient.js'
+import { clerkPublishableKey, isClerkConfigured } from './auth/clerkConfig.js'
 import { initTheme } from './composables/useTheme.js'
 
 initTheme()
@@ -11,18 +12,22 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import './assets/dashboard.css'
 
 async function bootstrap() {
-  await initAuth()
-
   const app = createApp(App)
-  app.use(router)
-  await router.isReady()
 
-  const pending = sessionStorage.getItem('auth_return')
-  if (pending && getAccount()) {
-    sessionStorage.removeItem('auth_return')
-    await router.replace(pending)
+  if (isClerkConfigured) {
+    app.use(clerkPlugin, {
+      publishableKey: clerkPublishableKey,
+      signInForceRedirectUrl: '/statuses',
+      signUpForceRedirectUrl: '/statuses',
+    })
+  } else {
+    console.warn(
+      'Clerk is not configured. Add VITE_CLERK_PUBLISHABLE_KEY to .env to enable sign-up and sign-in.'
+    )
   }
 
+  app.use(router)
+  await router.isReady()
   app.mount('#app')
 }
 

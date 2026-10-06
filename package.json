@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@azure/msal-browser": "^5.9.0",
+    "@clerk/vue": "^2.4.12",
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
     "chart.js": "^4.4.1",

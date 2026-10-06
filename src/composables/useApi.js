@@ -1,8 +1,9 @@
 import { ref } from 'vue'
+import { getClerkToken } from '../auth/clerkConfig'
 import { normalizeHistoryPayload } from '../utils/statusHistory'
 
 const DEFAULT_BASE =
-  'https://healthchker-akhghwe9adgxcqdt.eastus-01.azurewebsites.net/api'
+  'https://wt-health-dev-ok2.azurewebsites.net/api'
 
 /**
  * HTTP routes match the Function App’s invoke URLs (see Azure Portal or
@@ -154,18 +155,27 @@ function apiUrl(path, searchParams = {}) {
   return url.href
 }
 
+async function authHeaders(extraHeaders = {}) {
+  const token = await getClerkToken().catch(() => null)
+  return token
+    ? { ...extraHeaders, Authorization: `Bearer ${token}` }
+    : extraHeaders
+}
+
 export function useApi() {
   const loading = ref(false)
   const error = ref(null)
 
-  async function fetchStatuses() {
+  async function fetchStatuses(options = {}) {
     loading.value = true
     error.value = null
 
     try {
+      const headers = options.publicAggregate ? {} : await authHeaders()
       const response = await fetch(apiUrl(getStatusReaderFunctionName()), {
         method: 'GET',
-        credentials: 'omit'
+        credentials: 'omit',
+        headers
       })
 
       if (!response.ok) {
@@ -198,7 +208,8 @@ export function useApi() {
       }
     }
 
-    void fetch(pollUrl, { method: 'GET', credentials: 'omit' })
+    void authHeaders()
+      .then((headers) => fetch(pollUrl, { method: 'GET', credentials: 'omit', headers }))
       .then((response) => {
         if (!response.ok) {
           console.warn(
@@ -239,7 +250,8 @@ export function useApi() {
     try {
       const response = await fetch(apiUrl(getUrlListReaderFunctionName()), {
         method: 'GET',
-        credentials: 'omit'
+        credentials: 'omit',
+        headers: await authHeaders()
       })
 
       if (!response.ok) {
@@ -265,13 +277,15 @@ export function useApi() {
       const response = await fetch(apiUrl(getUrlPersisterFunctionName()), {
         method: 'POST',
         credentials: 'omit',
-        headers: {
+        headers: await authHeaders({
           'Content-Type': 'application/json'
-        },
+        }),
         body: JSON.stringify([
           {
             urlName: urlData.urlName,
-            url: urlData.url
+            url: urlData.url,
+            category: urlData.category || 'General',
+            visibility: urlData.visibility === 'public' ? 'public' : 'private'
           }
         ])
       })
@@ -298,13 +312,15 @@ export function useApi() {
       const response = await fetch(apiUrl(getUrlPersisterFunctionName()), {
         method: 'PUT',
         credentials: 'omit',
-        headers: {
+        headers: await authHeaders({
           'Content-Type': 'application/json'
-        },
+        }),
         body: JSON.stringify([
           {
             urlName: urlData.urlName,
-            url: urlData.url
+            url: urlData.url,
+            category: urlData.category || 'General',
+            visibility: urlData.visibility === 'public' ? 'public' : 'private'
           }
         ])
       })
@@ -333,7 +349,8 @@ export function useApi() {
       if (nextPageToken) params.nextPageToken = nextPageToken
       const response = await fetch(apiUrl(getHistoryReaderFunctionName(), params), {
         method: 'GET',
-        credentials: 'omit'
+        credentials: 'omit',
+        headers: await authHeaders()
       })
 
       if (!response.ok) {
@@ -357,7 +374,8 @@ export function useApi() {
     try {
       const response = await fetch(apiUrl(getStatsReaderFunctionName()), {
         method: 'GET',
-        credentials: 'omit'
+        credentials: 'omit',
+        headers: await authHeaders()
       })
 
       if (!response.ok) {
@@ -381,7 +399,8 @@ export function useApi() {
         apiUrl(getUrlPersisterFunctionName(), { urlName }),
         {
           method: 'DELETE',
-          credentials: 'omit'
+          credentials: 'omit',
+          headers: await authHeaders()
         }
       )
 

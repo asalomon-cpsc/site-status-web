@@ -4,9 +4,9 @@
       <div class="sidebar-brand">
         <div class="sidebar-brand-row">
           <div class="logo-mark" aria-hidden="true"></div>
-          <h1>Site status</h1>
+          <h1>Watchtower</h1>
         </div>
-        <div class="sidebar-tagline">Monitoring console</div>
+        <div class="sidebar-tagline">Your org monitoring</div>
       </div>
 
       <nav>
@@ -18,7 +18,7 @@
             @click="openStatusesTab"
           >
             <i class="bi bi-list-check"></i>
-            <span>Statuses</span>
+            <span>My statuses</span>
           </div>
           <div
             class="nav-item"
@@ -26,7 +26,7 @@
             @click="goOverview"
           >
             <i class="bi bi-columns-gap"></i>
-            <span>Overview</span>
+            <span>Dashboard</span>
           </div>
           <div
             class="nav-item"
@@ -66,8 +66,8 @@
         class="alert alert-warning mb-3"
         role="status"
       >
-        Sign-in is not configured. Add Azure AD variables to <code>.env</code> (see
-        <code>.env.example</code>).
+        Sign-in is not configured. Add <code>VITE_CLERK_PUBLISHABLE_KEY</code> to
+        <code>.env</code> (see <code>.env.example</code>).
       </div>
 
       <header class="dashboard-header">
@@ -123,6 +123,11 @@
         <div class="charts-grid">
           <UptimeChart :statuses="statuses" />
           <ResponseTimeChart :statuses="statuses" />
+        </div>
+        <div class="overview-actions">
+          <button type="button" class="btn btn-primary" @click="openStatusesTab">
+            View my statuses
+          </button>
         </div>
         <StatusGrid :statuses="statuses" :limit="6" result-filter="all" :show-search="false" />
       </div>
@@ -230,7 +235,7 @@ function syncTabFromRoute() {
     activeTab.value = 'statuses'
     return
   }
-  if (p === '/dashboard') {
+  if (p === '/dashboard' || p === '/overview') {
     activeTab.value = 'dashboard'
     return
   }
@@ -268,13 +273,13 @@ function onStatNavigate(filter) {
 
 const headerTitle = computed(() => {
   const titles = {
-    dashboard: 'Overview',
-    statuses: 'Statuses',
+    dashboard: 'Dashboard',
+    statuses: 'My statuses',
     urls: 'URL configuration',
     charts: 'Charts',
     history: 'History',
   }
-  return titles[activeTab.value] || 'Statuses'
+  return titles[activeTab.value] || 'My statuses'
 })
 
 const headerSubtitle = computed(() => {
@@ -286,7 +291,7 @@ const headerSubtitle = computed(() => {
   } else if (activeTab.value === 'statuses' && statusesFilter.value === 'offline') {
     filterNote = ' · Showing failed only'
   }
-  return `${online} of ${total} endpoints OK (latest poll)${filterNote} · UI refresh ${new Date().toLocaleString()}`
+  return `${online} of ${total} org endpoints OK (latest poll)${filterNote} · UI refresh ${new Date().toLocaleString()}`
 })
 
 function showToast(message, type = 'success', durationMs = 5000) {
@@ -422,5 +427,10 @@ onMounted(async () => {
 
 .btn-reload.loading i {
   animation: spin 0.9s linear infinite;
+}
+.overview-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin: 0.75rem 0 1.25rem;
 }
 </style>
