@@ -256,8 +256,8 @@ const capabilities = [
   },
   {
     icon: 'bi-cash-stack',
-    title: 'Free while we grow',
-    copy: 'Early access stays free. Paid plans only when we ship harder limits — not a $99 jump on day one.',
+    title: 'Free up to 15 URLs',
+    copy: 'No credit card. Stay free while we grow; later it’s about $1 per extra 10 URLs — not a big SaaS ladder.',
   },
 ]
 
