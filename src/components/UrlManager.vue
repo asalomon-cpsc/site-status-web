@@ -160,9 +160,9 @@
             </div>
           </div>
           <div v-if="inheritedHeaders.length" class="mb-3 inherited-headers">
-            <label class="form-label">From domain ({{ matchedDomain }})</label>
+            <label class="form-label">From domain ({{ matchedDomain }}) — optional defaults</label>
             <p class="headers-hint">
-              Applied automatically. Override any key below on this URL only.
+              Inherited if you set domain headers. Override any key below on this URL only.
             </p>
             <ul class="inherited-list">
               <li v-for="h in inheritedHeaders" :key="h.key">
@@ -173,14 +173,14 @@
           </div>
           <div class="mb-3">
             <div class="headers-label-row">
-              <label class="form-label mb-0">Per-URL headers</label>
+              <label class="form-label mb-0">Per-URL headers (optional)</label>
               <label class="headers-show">
                 <input v-model="showHeaderValues" type="checkbox">
                 Show values
               </label>
             </div>
             <p class="headers-hint">
-              Overrides domain defaults for this endpoint only. Never shown on the public directory.
+              Optional. Only for this endpoint (e.g. API key). Leave blank to use domain defaults or the Watchtower User-Agent.
             </p>
             <div class="headers-editor">
               <div

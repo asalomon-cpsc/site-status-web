@@ -4,8 +4,8 @@
       <div>
         <h3 class="dashboard-card-title">Domain headers</h3>
         <p class="card-sub">
-          Shared request headers for every URL on a host (e.g. User-Agent for cpsc.gov).
-          Per-URL headers can still override these.
+          Optional. Shared request headers for every URL on a host when you need them
+          (e.g. a special User-Agent). Skip this if the default poller is enough.
         </p>
       </div>
       <button class="btn btn-primary" type="button" @click="openAdd">
@@ -22,8 +22,8 @@
         {{ message }}
       </div>
       <div v-if="rows.length === 0" class="empty-state compact">
-        <h4>No domain defaults</h4>
-        <p>Optional — add a domain when several endpoints share auth or User-Agent.</p>
+        <h4>No domain headers</h4>
+        <p>Optional — only add when several endpoints on one host need the same headers.</p>
       </div>
       <table v-else class="data-table">
         <thead>
