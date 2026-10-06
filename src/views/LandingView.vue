@@ -240,14 +240,9 @@ const categoryOptions = CATEGORY_OPTIONS
 
 const capabilities = [
   {
-    icon: 'bi-upload',
-    title: 'Bulk URL onboarding',
-    copy: 'Paste lists, upload spreadsheets, validate URLs, and keep every tenant workspace clean.',
-  },
-  {
-    icon: 'bi-diagram-3',
-    title: 'Tenant-aware by design',
-    copy: 'Personal workspaces use user partitions; company workspaces use Clerk organization partitions.',
+    icon: 'bi-person-check',
+    title: 'Start solo — org optional',
+    copy: 'No Clerk organization required. Sign up into a personal workspace; switch to a company org later if you want shared URLs and billing.',
   },
   {
     icon: 'bi-shield-check',
@@ -258,6 +253,11 @@ const capabilities = [
     icon: 'bi-bell',
     title: 'Actionable alerts',
     copy: 'Durable polling records current state, history, and alert signals without managing servers.',
+  },
+  {
+    icon: 'bi-cash-stack',
+    title: 'Simple pricing',
+    copy: 'Free for 5 URLs. Starter $9 · Pro $29 · Business $99 — upgrade when limits matter, not at signup.',
   },
 ]
 
@@ -614,6 +614,12 @@ function goToApp() {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.9rem;
+}
+
+@media (max-width: 1100px) {
+  .capability-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .capability-card {
