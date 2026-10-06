@@ -53,6 +53,13 @@ function getStatsReaderFunctionName() {
   return 'statusstatsreader'
 }
 
+/** Anonymous public directory — GET JSON (visibility=public only) */
+function getPublicStatusesFunctionName() {
+  const raw = import.meta.env.VITE_PUBLIC_STATUSES_FUNCTION
+  if (raw && String(raw).trim()) return String(raw).trim()
+  return 'publicstatusesreader'
+}
+
 function getBaseUrl() {
   // Proxy only during `vite` dev — never in production builds (Netlify has no /__healthchker route).
   const useProxy =
@@ -187,6 +194,39 @@ export function useApi() {
     } catch (err) {
       error.value = err.message
       console.error('Error fetching statuses:', err)
+      return []
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Public landing directory — anonymous, public endpoints only.
+   * @param {{ q?: string, category?: string }} [filters]
+   */
+  async function fetchPublicStatuses(filters = {}) {
+    loading.value = true
+    error.value = null
+
+    try {
+      const params = {}
+      if (filters.q) params.q = filters.q
+      if (filters.category) params.category = filters.category
+
+      const response = await fetch(apiUrl(getPublicStatusesFunctionName(), params), {
+        method: 'GET',
+        credentials: 'omit'
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      return Array.isArray(data) ? data : []
+    } catch (err) {
+      error.value = err.message
+      console.error('Error fetching public statuses:', err)
       return []
     } finally {
       loading.value = false
@@ -422,6 +462,7 @@ export function useApi() {
     loading,
     error,
     fetchStatuses,
+    fetchPublicStatuses,
     fetchStatusHistory,
     fetchStatusStats,
     refreshStatuses,

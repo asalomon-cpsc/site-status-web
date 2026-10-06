@@ -86,13 +86,12 @@
       aria-labelledby="url-modal-title"
       @keydown.escape.prevent="closeModal"
     >
-      <button
-        type="button"
+      <div
         class="url-modal-backdrop"
-        aria-label="Close dialog"
+        aria-hidden="true"
         @click="closeModal"
       />
-      <div class="url-modal-dialog" @click.stop>
+      <div class="url-modal-dialog" @click.stop tabindex="-1">
         <div class="url-modal-header">
           <h5 id="url-modal-title" class="modal-title">
             {{ isEditing ? 'Edit URL' : 'Add URL' }}
@@ -247,6 +246,11 @@ async function loadUrls() {
 
 function lockBodyScroll(lock) {
   document.body.style.overflow = lock ? 'hidden' : ''
+  const app = document.getElementById('app')
+  if (app) {
+    if (lock) app.setAttribute('inert', '')
+    else app.removeAttribute('inert')
+  }
 }
 
 async function openAddModal() {
@@ -256,7 +260,7 @@ async function openAddModal() {
   modalOpen.value = true
   lockBodyScroll(true)
   await nextTick()
-  nameInput.value?.focus()
+  nameInput.value?.focus({ preventScroll: true })
 }
 
 async function openEditModal(url) {
@@ -273,7 +277,7 @@ async function openEditModal(url) {
   modalOpen.value = true
   lockBodyScroll(true)
   await nextTick()
-  nameInput.value?.focus()
+  nameInput.value?.focus({ preventScroll: true })
 }
 
 function closeModal() {
@@ -413,7 +417,7 @@ onUnmounted(() => lockBodyScroll(false))
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  pointer-events: none;
+  isolation: isolate;
 }
 
 .url-modal-backdrop {
@@ -424,7 +428,7 @@ onUnmounted(() => lockBodyScroll(false))
   border: 0;
   background: rgba(0, 0, 0, 0.55);
   cursor: pointer;
-  pointer-events: auto;
+  z-index: 0;
 }
 
 .url-modal-dialog {
@@ -438,14 +442,16 @@ onUnmounted(() => lockBodyScroll(false))
   border-radius: var(--radius-md, 8px);
   color: var(--text-main, #f5f5f5);
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
-  pointer-events: auto;
 }
 
 .url-modal-dialog input,
 .url-modal-dialog select,
 .url-modal-dialog button,
-.url-modal-dialog textarea {
+.url-modal-dialog textarea,
+.url-modal-dialog label {
   pointer-events: auto;
+  position: relative;
+  z-index: 2;
 }
 
 .url-modal-header,

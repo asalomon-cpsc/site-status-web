@@ -113,6 +113,85 @@
       </article>
     </section>
 
+    <section class="directory-section" aria-label="Public status directory">
+      <div class="directory-header">
+        <div>
+          <p class="panel-kicker">Public directory</p>
+          <h2>Live endpoints by category</h2>
+          <p class="directory-lead">
+            Publicly shared monitors, grouped for quick scanning. Mark endpoints public from Manage.
+          </p>
+        </div>
+        <div class="directory-controls">
+          <input
+            v-model="directoryQuery"
+            type="search"
+            class="form-control directory-search"
+            placeholder="Search name, URL, org…"
+            aria-label="Search public endpoints"
+          >
+          <select
+            v-model="directoryCategory"
+            class="form-control directory-category"
+            aria-label="Filter by category"
+          >
+            <option value="">All categories</option>
+            <option v-for="cat in categoryOptions" :key="cat" :value="cat">{{ cat }}</option>
+          </select>
+        </div>
+      </div>
+
+      <p v-if="directoryLoading" class="directory-empty">Loading public endpoints…</p>
+      <p v-else-if="filteredDirectory.length === 0" class="directory-empty">
+        No public endpoints yet. Sign in, add a URL, and set visibility to Public.
+      </p>
+
+      <div v-else class="directory-groups">
+        <article
+          v-for="group in groupedDirectory"
+          :key="group.category"
+          class="directory-group"
+        >
+          <header class="directory-group-header">
+            <h3>{{ group.category }}</h3>
+            <span>{{ group.items.length }}</span>
+          </header>
+          <div class="directory-table-wrap">
+            <table class="directory-table">
+              <thead>
+                <tr>
+                  <th>Endpoint</th>
+                  <th>Org</th>
+                  <th>Status</th>
+                  <th>Last checked</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="item in group.items" :key="`${item.category}-${item.urlName}-${item.url}`">
+                  <td>
+                    <strong>{{ item.urlName }}</strong>
+                    <a
+                      class="directory-url"
+                      :href="item.url"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >{{ item.url }}</a>
+                  </td>
+                  <td>{{ item.orgLabel }}</td>
+                  <td>
+                    <span class="status-pill" :class="statusClass(item.status)">
+                      {{ formatStatus(item.status) }}
+                    </span>
+                  </td>
+                  <td>{{ formatChecked(item.date) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </div>
+    </section>
+
     <section class="architecture-strip">
       <div>
         <p class="panel-kicker">Architecture</p>
@@ -138,11 +217,26 @@ import { isClerkConfigured } from '../auth/clerkConfig.js'
 import ThemeToggle from '../components/ThemeToggle.vue'
 import { useApi } from '../composables/useApi.js'
 
+const CATEGORY_OPTIONS = [
+  'Landing',
+  'API',
+  'Intake',
+  'Documentation',
+  'General',
+  'Auth',
+  'Search'
+]
+
 const router = useRouter()
-const { fetchStatuses } = useApi()
+const { fetchStatuses, fetchPublicStatuses } = useApi()
 const showUnconfigured = computed(() => !isClerkConfigured)
 const statuses = ref([])
 const statsLoading = ref(true)
+const directory = ref([])
+const directoryLoading = ref(true)
+const directoryQuery = ref('')
+const directoryCategory = ref('')
+const categoryOptions = CATEGORY_OPTIONS
 
 const capabilities = [
   {
@@ -167,13 +261,61 @@ const capabilities = [
   },
 ]
 
-const onlineCount = computed(() => statuses.value.filter((s) => s.status === 'OK').length)
+const onlineCount = computed(() => statuses.value.filter((s) => isUp(s.status)).length)
 const totalCount = computed(() => statuses.value.length)
 const offlineCount = computed(() => Math.max(totalCount.value - onlineCount.value, 0))
 const uptimePercentage = computed(() => {
   if (!totalCount.value) return 0
   return Math.round((onlineCount.value / totalCount.value) * 100)
 })
+
+const filteredDirectory = computed(() => {
+  const q = directoryQuery.value.trim().toLowerCase()
+  const cat = directoryCategory.value
+  return directory.value.filter((item) => {
+    if (cat && item.category !== cat) return false
+    if (!q) return true
+    const hay = `${item.urlName} ${item.url} ${item.category} ${item.orgLabel}`.toLowerCase()
+    return hay.includes(q)
+  })
+})
+
+const groupedDirectory = computed(() => {
+  const map = new Map()
+  for (const item of filteredDirectory.value) {
+    const key = item.category || 'General'
+    if (!map.has(key)) map.set(key, [])
+    map.get(key).push(item)
+  }
+  return [...map.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([category, items]) => ({ category, items }))
+})
+
+async function loadDirectory() {
+  directoryLoading.value = true
+  try {
+    const rows = await fetchPublicStatuses({
+      q: directoryQuery.value.trim() || undefined,
+      category: directoryCategory.value || undefined
+    })
+    directory.value = rows.map((row) => ({
+      urlName: row.UrlName ?? row.urlName ?? '',
+      url: row.Url ?? row.url ?? '',
+      category: row.Category ?? row.category ?? 'General',
+      status: row.Status ?? row.status ?? '',
+      date: row.Date ?? row.date ?? null,
+      orgLabel: row.OrgLabel ?? row.orgLabel ?? 'Watchtower'
+    }))
+    // Prefer public directory for the hero tally when available.
+    if (directory.value.length) {
+      statuses.value = directory.value.map((item) => ({ status: item.status }))
+      statsLoading.value = false
+    }
+  } finally {
+    directoryLoading.value = false
+  }
+}
 
 onMounted(async () => {
   try {
@@ -184,7 +326,34 @@ onMounted(async () => {
   } finally {
     statsLoading.value = false
   }
+  await loadDirectory()
 })
+
+function isUp(status) {
+  const s = String(status || '').toUpperCase()
+  return s === 'OK' || s === '200' || s === 'UP'
+}
+
+function formatStatus(status) {
+  if (isUp(status)) return 'Up'
+  const s = String(status || '').trim()
+  if (!s || s.toLowerCase() === 'pending') return 'Pending'
+  return 'Down'
+}
+
+function statusClass(status) {
+  if (isUp(status)) return 'is-up'
+  const s = String(status || '').toLowerCase()
+  if (!s || s === 'pending') return 'is-pending'
+  return 'is-down'
+}
+
+function formatChecked(date) {
+  if (!date) return '—'
+  const d = new Date(date)
+  if (Number.isNaN(d.getTime())) return '—'
+  return d.toLocaleString()
+}
 
 function goHome() {
   router.push('/')
@@ -497,6 +666,158 @@ function goToApp() {
   letter-spacing: 0.05em;
 }
 
+.directory-section {
+  max-width: 1180px;
+  margin: 3rem auto 0;
+}
+
+.directory-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.directory-header h2 {
+  margin: 0;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  letter-spacing: -0.04em;
+}
+
+.directory-lead {
+  max-width: 540px;
+  margin: 0.55rem 0 0;
+  color: var(--text-muted);
+}
+
+.directory-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.directory-search {
+  min-width: min(280px, 70vw);
+}
+
+.directory-category {
+  min-width: 160px;
+}
+
+.directory-empty {
+  color: var(--text-muted);
+  border: 1px dashed var(--border-color);
+  border-radius: 14px;
+  padding: 1.25rem;
+  margin: 0;
+}
+
+.directory-groups {
+  display: grid;
+  gap: 1rem;
+}
+
+.directory-group {
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent),
+    var(--bg-panel);
+  overflow: hidden;
+}
+
+.directory-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.directory-group-header h3 {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.directory-group-header span {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.directory-table-wrap {
+  overflow-x: auto;
+}
+
+.directory-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.directory-table th,
+.directory-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: top;
+}
+
+.directory-table th {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.directory-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.directory-table strong {
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.directory-url {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  word-break: break-all;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.45rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.status-pill.is-up {
+  color: var(--color-success);
+  border-color: rgba(74, 222, 128, 0.45);
+}
+
+.status-pill.is-down {
+  color: var(--color-danger);
+  border-color: rgba(239, 68, 68, 0.45);
+}
+
+.status-pill.is-pending {
+  color: var(--text-muted);
+}
+
 @media (max-width: 980px) {
   .hero-shell,
   .architecture-strip {
@@ -529,6 +850,16 @@ function goToApp() {
 
   .telemetry-panel {
     padding: 1rem;
+  }
+
+  .directory-controls {
+    width: 100%;
+  }
+
+  .directory-search,
+  .directory-category {
+    width: 100%;
+    min-width: 0;
   }
 }
 </style>
