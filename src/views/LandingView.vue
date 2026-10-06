@@ -256,8 +256,8 @@ const capabilities = [
   },
   {
     icon: 'bi-cash-stack',
-    title: 'Simple pricing',
-    copy: 'Free for 5 URLs. Starter $9 · Pro $29 · Business $99 — upgrade when limits matter, not at signup.',
+    title: 'Free while we grow',
+    copy: 'Early access stays free. Paid plans only when we ship harder limits — not a $99 jump on day one.',
   },
 ]
 
