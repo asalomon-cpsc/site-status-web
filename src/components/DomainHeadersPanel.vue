@@ -119,22 +119,43 @@
             </p>
             <div class="headers-editor">
               <div v-for="(h, i) in form.headers" :key="i" class="header-row">
-                <input v-model="h.key" type="text" class="form-control" placeholder="Header name" autocomplete="off">
+                <input
+                  v-model="h.key"
+                  type="text"
+                  class="form-control"
+                  list="domain-header-suggestions"
+                  placeholder="e.g. User-Agent"
+                  autocomplete="off"
+                >
                 <input
                   v-model="h.value"
                   :type="showValues ? 'text' : 'password'"
                   class="form-control"
-                  placeholder="Value"
+                  :placeholder="suggestionForHeader(h.key)"
                   autocomplete="off"
                 >
                 <button type="button" class="btn-icon danger" @click="form.headers.splice(i, 1)">
                   <i class="bi bi-x-lg"></i>
                 </button>
               </div>
-              <button type="button" class="btn btn-secondary btn-sm" @click="form.headers.push({ key: '', value: '' })">
-                + Add header
-              </button>
+              <div class="header-suggest-row">
+                <button
+                  v-for="hint in unusedSuggestions(form.headers)"
+                  :key="hint.name"
+                  type="button"
+                  class="header-suggest-chip"
+                  @click="addSuggested(hint.name)"
+                >
+                  + {{ hint.name }}
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" @click="form.headers.push({ key: '', value: '' })">
+                  + Custom
+                </button>
+              </div>
             </div>
+            <datalist id="domain-header-suggestions">
+              <option v-for="hint in SUGGESTED_HEADERS" :key="hint.name" :value="hint.name" />
+            </datalist>
           </div>
           <div v-if="formError" class="small" style="color: var(--danger); margin-bottom: 0.75rem;">
             {{ formError }}
@@ -154,7 +175,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useApi } from '../composables/useApi'
-import { normalizeDomain, parseHeadersJson } from '../utils/domainHeaders'
+import { normalizeDomain, parseHeadersJson, SUGGESTED_HEADERS, suggestionForHeader } from '../utils/domainHeaders'
 
 const emit = defineEmits(['updated'])
 const { fetchDomainHeaders, saveDomainHeader, deleteDomainHeader } = useApi()
@@ -191,7 +212,7 @@ function openAdd() {
   form.value = {
     domain: '',
     label: '',
-    headers: [{ key: 'User-Agent', value: '' }]
+    headers: [{ key: '', value: '' }]
   }
   formError.value = ''
   modalOpen.value = true
@@ -207,6 +228,20 @@ function openEdit(row) {
   }
   formError.value = ''
   modalOpen.value = true
+}
+
+function unusedSuggestions(rows) {
+  const used = new Set((rows || []).map((r) => String(r.key || '').toLowerCase()).filter(Boolean))
+  return SUGGESTED_HEADERS.filter((h) => !used.has(h.name.toLowerCase()))
+}
+
+function addSuggested(name) {
+  const empty = form.value.headers.find((r) => !String(r.key || '').trim())
+  if (empty) {
+    empty.key = name
+    return
+  }
+  form.value.headers.push({ key: name, value: '' })
 }
 
 function close() {
@@ -322,5 +357,30 @@ defineExpose({ load })
   grid-template-columns: 1fr 1fr auto;
   gap: 0.4rem;
   align-items: center;
+}
+
+.header-suggest-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.header-suggest-chip {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.3rem 0.5rem;
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.header-suggest-chip:hover {
+  border-color: var(--text-accent);
+  color: var(--text-main);
 }
 </style>

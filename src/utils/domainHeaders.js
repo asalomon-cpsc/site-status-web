@@ -14,6 +14,22 @@ export function normalizeDomain(domainOrUrl) {
   return raw.replace(/^\.+|\.+$/g, '')
 }
 
+/** Common header names for autocomplete / quick-add (names only — never values). */
+export const SUGGESTED_HEADERS = [
+  { name: 'User-Agent', placeholder: 'e.g. azure_cpsc or WatchtowerMonitor/1.0' },
+  { name: 'Authorization', placeholder: 'e.g. Bearer …' },
+  { name: 'X-Api-Key', placeholder: 'API key' },
+  { name: 'Accept', placeholder: 'e.g. application/json' },
+  { name: 'X-Request-Id', placeholder: 'optional correlation id' }
+]
+
+export function suggestionForHeader(name) {
+  const hit = SUGGESTED_HEADERS.find(
+    (h) => h.name.toLowerCase() === String(name || '').toLowerCase()
+  )
+  return hit?.placeholder || 'Value'
+}
+
 export function hostFromUrl(url) {
   if (!url) return null
   try {
