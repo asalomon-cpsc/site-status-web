@@ -143,7 +143,8 @@
         <StatusGrid :statuses="statuses" :result-filter="statusesFilter" />
       </div>
 
-      <div v-else-if="activeTab === 'urls'" class="fade-in">
+      <div v-else-if="activeTab === 'urls'" class="fade-in manage-stack">
+        <DomainHeadersPanel />
         <UrlManager @urlUpdated="refreshData" />
       </div>
 
@@ -180,6 +181,7 @@ import { useApi } from '../composables/useApi'
 import StatsOverview from '../components/StatsOverview.vue'
 import StatusGrid from '../components/StatusGrid.vue'
 import UrlManager from '../components/UrlManager.vue'
+import DomainHeadersPanel from '../components/DomainHeadersPanel.vue'
 import UptimeChart from '../components/UptimeChart.vue'
 import ResponseTimeChart from '../components/ResponseTimeChart.vue'
 import HistoryChart from '../components/HistoryChart.vue'

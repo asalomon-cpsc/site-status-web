@@ -60,6 +60,20 @@ function getPublicStatusesFunctionName() {
   return 'publicstatusesreader'
 }
 
+/** Domain-level header profiles — GET JSON */
+function getDomainHeaderReaderFunctionName() {
+  const raw = import.meta.env.VITE_DOMAIN_HEADER_READER_FUNCTION
+  if (raw && String(raw).trim()) return String(raw).trim()
+  return 'domainheaderreader'
+}
+
+/** Domain-level header profiles — POST / PUT / DELETE */
+function getDomainHeaderPersisterFunctionName() {
+  const raw = import.meta.env.VITE_DOMAIN_HEADER_PERSISTER_FUNCTION
+  if (raw && String(raw).trim()) return String(raw).trim()
+  return 'domainheaderpersister'
+}
+
 function getBaseUrl() {
   // Proxy only during `vite` dev — never in production builds (no /__watchtower route there).
   const useProxy =
@@ -464,6 +478,69 @@ export function useApi() {
     }
   }
 
+  async function fetchDomainHeaders() {
+    try {
+      const response = await fetch(apiUrl(getDomainHeaderReaderFunctionName()), {
+        method: 'GET',
+        credentials: 'omit',
+        headers: await authHeaders()
+      })
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+      const data = await response.json()
+      return Array.isArray(data) ? data : []
+    } catch (err) {
+      console.error('Error fetching domain headers:', err)
+      return []
+    }
+  }
+
+  async function saveDomainHeader(payload, { isEdit = false } = {}) {
+    try {
+      const headersObj = {}
+      for (const row of payload.headers || []) {
+        const key = String(row?.key || '').trim()
+        if (!key) continue
+        headersObj[key] = row?.value == null ? '' : String(row.value)
+      }
+
+      const response = await fetch(apiUrl(getDomainHeaderPersisterFunctionName()), {
+        method: isEdit ? 'PUT' : 'POST',
+        credentials: 'omit',
+        headers: await authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({
+          domain: payload.domain,
+          label: payload.label || '',
+          headers: headersObj
+        })
+      })
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+      return { success: true, data: await response.json() }
+    } catch (err) {
+      console.error('Error saving domain headers:', err)
+      return { success: false, error: err.message }
+    }
+  }
+
+  async function deleteDomainHeader(domain) {
+    try {
+      const response = await fetch(
+        apiUrl(getDomainHeaderPersisterFunctionName(), { domain }),
+        {
+          method: 'DELETE',
+          credentials: 'omit',
+          headers: await authHeaders()
+        }
+      )
+      if (!response.ok && response.status !== 204) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      return { success: true }
+    } catch (err) {
+      console.error('Error deleting domain headers:', err)
+      return { success: false, error: err.message }
+    }
+  }
+
   return {
     loading,
     error,
@@ -476,6 +553,9 @@ export function useApi() {
     fetchUrls,
     addUrl,
     updateUrl,
-    deleteUrl
+    deleteUrl,
+    fetchDomainHeaders,
+    saveDomainHeader,
+    deleteDomainHeader
   }
 }

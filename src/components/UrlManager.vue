@@ -159,16 +159,28 @@
               </label>
             </div>
           </div>
+          <div v-if="inheritedHeaders.length" class="mb-3 inherited-headers">
+            <label class="form-label">From domain ({{ matchedDomain }})</label>
+            <p class="headers-hint">
+              Applied automatically. Override any key below on this URL only.
+            </p>
+            <ul class="inherited-list">
+              <li v-for="h in inheritedHeaders" :key="h.key">
+                <code>{{ h.key }}</code>
+                <span>{{ showHeaderValues ? h.value : '••••••••' }}</span>
+              </li>
+            </ul>
+          </div>
           <div class="mb-3">
             <div class="headers-label-row">
-              <label class="form-label mb-0">Custom headers</label>
+              <label class="form-label mb-0">Per-URL headers</label>
               <label class="headers-show">
                 <input v-model="showHeaderValues" type="checkbox">
                 Show values
               </label>
             </div>
             <p class="headers-hint">
-              Sent with each poll (e.g. Authorization, X-Api-Key). Never shown on the public directory.
+              Overrides domain defaults for this endpoint only. Never shown on the public directory.
             </p>
             <div class="headers-editor">
               <div
@@ -229,8 +241,9 @@
 </template>
 
 <script setup>
-import { nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useApi } from '../composables/useApi'
+import { matchDomain, parseHeadersJson } from '../utils/domainHeaders'
 
 const emit = defineEmits(['urlUpdated'])
 
@@ -244,7 +257,8 @@ const CATEGORY_OPTIONS = [
   'Search'
 ]
 
-const { fetchUrls, addUrl, updateUrl, deleteUrl } = useApi()
+const { fetchUrls, addUrl, updateUrl, deleteUrl, fetchDomainHeaders } = useApi()
+const domainProfiles = ref([])
 
 const urls = ref([])
 const isEditing = ref(false)
@@ -270,6 +284,20 @@ const emptyForm = () => ({
 })
 
 const formData = ref(emptyForm())
+
+const matchedDomain = computed(() =>
+  matchDomain(
+    formData.value.url,
+    domainProfiles.value.map((p) => p.domain)
+  )
+)
+
+const inheritedHeaders = computed(() => {
+  const domain = matchedDomain.value
+  if (!domain) return []
+  const profile = domainProfiles.value.find((p) => p.domain === domain)
+  return profile ? profile.headerList : []
+})
 
 function resolveCategory(category, categoryCustom) {
   if (category === 'Custom') {
@@ -335,6 +363,18 @@ function removeHeaderRow(index) {
 async function loadUrls() {
   const data = await fetchUrls()
   urls.value = Array.isArray(data) ? data : []
+}
+
+async function loadDomainProfiles() {
+  const data = await fetchDomainHeaders()
+  domainProfiles.value = (Array.isArray(data) ? data : []).map((entity) => {
+    const domain = entity.Domain || entity.domain || entity.RowKey || ''
+    const headersJson = entity.HeadersJson || entity.headersJson || ''
+    return {
+      domain,
+      headerList: parseHeadersJson(headersJson)
+    }
+  })
 }
 
 function lockBodyScroll(lock) {
@@ -442,7 +482,9 @@ async function handleDelete(urlName) {
   }
 }
 
-onMounted(loadUrls)
+onMounted(async () => {
+  await Promise.all([loadUrls(), loadDomainProfiles()])
+})
 onUnmounted(() => lockBodyScroll(false))
 </script>
 
@@ -540,6 +582,32 @@ onUnmounted(() => lockBodyScroll(false))
   grid-template-columns: 1fr 1fr auto;
   gap: 0.4rem;
   align-items: center;
+}
+
+.inherited-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.inherited-list li {
+  display: grid;
+  grid-template-columns: minmax(7rem, 0.4fr) 1fr;
+  gap: 0.5rem;
+  padding: 0.4rem 0.55rem;
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+}
+
+.inherited-list code {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
 }
 </style>
 

@@ -853,6 +853,11 @@ body::before {
   animation: fadeIn 0.25s ease;
 }
 
+.manage-stack {
+  display: grid;
+  gap: 1.25rem;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -917,3 +922,4 @@ body::before {
 .toast.info {
   border-left: 3px solid var(--text-accent);
 }
+
