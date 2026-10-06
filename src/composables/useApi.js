@@ -7,7 +7,7 @@ const DEFAULT_BASE =
 
 /**
  * HTTP routes match the Function App’s invoke URLs (see Azure Portal or
- * `az functionapp function list -g functions-cpsc1 -n healthchker`).
+ * `az functionapp function list -g rg-watchtower-dev -n wt-health-dev-ok2`).
  * Paths are case-insensitive on Azure; defaults match invokeUrlTemplate lowercase.
  */
 
@@ -61,11 +61,11 @@ function getPublicStatusesFunctionName() {
 }
 
 function getBaseUrl() {
-  // Proxy only during `vite` dev — never in production builds (Netlify has no /__healthchker route).
+  // Proxy only during `vite` dev — never in production builds (no /__watchtower route there).
   const useProxy =
     import.meta.env.DEV && import.meta.env.VITE_DEV_PROXY === 'true'
   if (useProxy && typeof window !== 'undefined') {
-    return `${window.location.origin}/__healthchker/api`.replace(/\/$/, '')
+    return `${window.location.origin}/__watchtower/api`.replace(/\/$/, '')
   }
 
   let base = String(import.meta.env.VITE_API_BASE_URL || '').trim()
